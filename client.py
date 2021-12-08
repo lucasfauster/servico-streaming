@@ -42,7 +42,7 @@ def get_frame_data():
     data += client_socket.recv(4 * 1024)
     data = data[payload_size:]
     while len(data) < BUFFER_SIZE:
-        data += client_socket.recv(4 * 1024)
+        data += client_socket.recv(4 * 1024)  # TODO descobrir como fazer client entender que video acabou
     frame_data = data[:BUFFER_SIZE]
 
     return frame_data, data[BUFFER_SIZE:]
