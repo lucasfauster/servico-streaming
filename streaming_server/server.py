@@ -54,7 +54,7 @@ def find_video(client_socket, resolution, video_name):
     video = cv2.VideoCapture(f'../videos/{resolution}/{video_name}')
 
     if not video.isOpened():
-        error_message = f"Error: Video {video} not found for resolution {resolution}."
+        error_message = f"Error: Video {video_name} not found for resolution {resolution}."
         print(error_message)
         client_socket.send(pickle.dumps([404, error_message]))
         client_socket.close()

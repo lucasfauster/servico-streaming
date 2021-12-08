@@ -6,7 +6,6 @@ import struct
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 host_ip = '127.0.1.1'
 port = 5050
-BUFFER_SIZE = 2430162
 
 
 def main():
@@ -19,12 +18,36 @@ def main():
 
 
 def show_video():
+    data = b""
     while True:
-        frame_data, data = get_frame_data()
+        frame_data, data = get_frame_data(data)
+
+        if frame_data is None:
+            print("VIDEO FINISHED!")
+            client_socket.close()
+            break
+
         frame = pickle.loads(frame_data)
         cv2.imshow(f"FROM {host_ip}", frame)
         if cv2.waitKey(1) == ord('q'):
             break
+
+
+def get_frame_data(data):
+    payload_size = struct.calcsize("Q")
+    while len(data) < payload_size:
+        packet = client_socket.recv(4 * 1024)
+        if not packet:
+            return None, data
+        data += packet
+    packed_msg_size = data[:payload_size]
+    data = data[payload_size:]
+    msg_size = struct.unpack("Q", packed_msg_size)[0]
+    while len(data) < msg_size:
+        data += client_socket.recv(4 * 1024)
+    frame_data = data[:msg_size]
+    data = data[msg_size:]
+    return frame_data, data
 
 
 def has_video():
@@ -33,19 +56,6 @@ def has_video():
         print(found_video_error_message)
         return False
     return True
-
-
-def get_frame_data():
-    data = b""
-    payload_size = struct.calcsize("Q")
-
-    data += client_socket.recv(4 * 1024)
-    data = data[payload_size:]
-    while len(data) < BUFFER_SIZE:
-        data += client_socket.recv(4 * 1024)  # TODO descobrir como fazer client entender que video acabou
-    frame_data = data[:BUFFER_SIZE]
-
-    return frame_data, data[BUFFER_SIZE:]
 
 
 if __name__ == "__main__":
