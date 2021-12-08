@@ -10,8 +10,15 @@ port = 5050
 
 def main():
     client_socket.connect((host_ip, port))
+    resAvaliable = ["240p", "480p", "720p"]
+    print('Avaliable resolutions: 240p/ 480p/ 720p')
+    resolution = input('Select one resolution: ')
 
-    client_socket.send(pickle.dumps(["teste3.mkv", "480p"]))
+    if resolution not in resAvaliable: 
+        print('Resolution not found')
+        return
+
+    client_socket.send(pickle.dumps(["teste.mkv", resolution]))
 
     if has_video():
         show_video()
