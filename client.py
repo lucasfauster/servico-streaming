@@ -18,7 +18,7 @@ def main():
         print('Resolution not found')
         return
 
-    client_socket.send(pickle.dumps(["teste.mkv", resolution]))
+    client_socket.send(pickle.dumps(["video.mkv", resolution]))
 
     if has_video():
         show_video()

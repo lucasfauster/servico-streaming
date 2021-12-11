@@ -20,9 +20,12 @@ def handle_client(address, client_socket):
     try:
         print('CLIENT {} CONNECTED!'.format(address))
 
+        # recebe o nome do video e a resolução que o cliente escolheu
         video_name, resolution = pickle.loads(client_socket.recv(1024))
+        # carrega o video dos arquivos
         video = find_video(client_socket, resolution, video_name)
-        send_video(video, client_socket)
+        # renderiza o video para o cliente
+        send_video(video, client_socket, resolution)
 
         client_socket.close()
 
@@ -31,16 +34,23 @@ def handle_client(address, client_socket):
         pass
 
 
-def send_video(video, client_socket):
+def send_video(video, client_socket, resolution):
     while video.isOpened():
         img, frame = video.read()
         if not img:
             print(f'VIDEO FINISHED!')
             break
-        frame = imutils.resize(frame, width=1200)
+
+        # definindo a resolução
+        resolSize = {"240p": 240, "480p": 480, "720p": 720}
+        frame = imutils.resize(frame, width=int(resolSize.get(resolution)*1.7778), height=resolSize.get(resolution))
+        # serializa o frame do vídeo
         a = pickle.dumps(frame)
+        # empacota o frame serializado
         message = struct.pack("Q", len(a)) + a
+        # envia o pacote para o cliente
         client_socket.sendall(message)
+        #recebe um input do teclado do cliente
         key = cv2.waitKey(1) & 0xFF
         if key == ord("q"):
             break
@@ -49,9 +59,7 @@ def send_video(video, client_socket):
 
 
 def find_video(client_socket, resolution, video_name):
-
-    # noinspection PyArgumentList
-    video = cv2.VideoCapture(f'../videos/{resolution}/{video_name}')
+    video = cv2.VideoCapture(f'../videos/{video_name}')
 
     if not video.isOpened():
         error_message = f"Error: Video {video_name} not found for resolution {resolution}."
