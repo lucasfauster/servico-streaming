@@ -3,32 +3,43 @@ import pickle
 import socket
 import struct
 
-client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 host_ip = '127.0.1.1'
 port = 5050
+address = (host_ip, port)
 
 
 def main():
-    client_socket.connect((host_ip, port))
     resAvaliable = ["240p", "480p", "720p"]
     print('Avaliable resolutions: 240p/ 480p/ 720p')
     resolution = input('Select one resolution: ')
 
-    if resolution not in resAvaliable: 
+    if resolution not in resAvaliable:
         print('Resolution not found')
         return
 
-    client_socket.send(pickle.dumps(["video.mkv", resolution]))
+    msg = pickle.dumps(['REPRODUZIR_VIDEO'])
+    client_socket.sendto(msg, ('127.0.1.1', 5050))
 
-    if has_video():
+    resposta, address = client_socket.recvfrom(1024)
+    if pickle.loads(resposta)[0] == 'ENVIAR RESOLUCAO':
+        print('chegou')
+        data = pickle.dumps(["VIDEO/RESOLUCAO", "video.mkv", resolution])
+        client_socket.sendto(data, address)
+
+    resposta, address = client_socket.recvfrom(1024)
+    if pickle.loads(resposta)[0] == 404:
+        print('Video não encontrado para a resolução escolhida')
+    elif pickle.loads(resposta)[0] == 204:
+        print('Iniciando reprodução do vídeo')
         show_video()
 
 
 def show_video():
     data = b""
+    print('chega no show_video')
     while True:
         frame_data, data = get_frame_data(data)
-
         if frame_data is None:
             print("VIDEO FINISHED!")
             client_socket.close()
@@ -43,7 +54,7 @@ def show_video():
 def get_frame_data(data):
     payload_size = struct.calcsize("Q")
     while len(data) < payload_size:
-        packet = client_socket.recv(4 * 1024)
+        packet, origin = client_socket.recvfrom(4 * 1024)
         if not packet:
             return None, data
         data += packet
@@ -51,11 +62,13 @@ def get_frame_data(data):
     data = data[payload_size:]
     msg_size = struct.unpack("Q", packed_msg_size)[0]
     while len(data) < msg_size:
-        data += client_socket.recv(4 * 1024)
+        packet, origin = client_socket.recvfrom(4 * 1024)
+        data += packet
     frame_data = data[:msg_size]
     data = data[msg_size:]
     return frame_data, data
 
+''''
 
 def has_video():
     found_video_code, found_video_error_message = pickle.loads(client_socket.recv(1024))
@@ -63,7 +76,7 @@ def has_video():
         print(found_video_error_message)
         return False
     return True
-
+'''''
 
 if __name__ == "__main__":
     main()

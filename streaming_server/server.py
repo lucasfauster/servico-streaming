@@ -5,36 +5,26 @@ import threading
 import cv2
 import imutils
 
-server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 host_name = socket.gethostname()
 host_ip = socket.gethostbyname(host_name)
 print('HOST IP:', host_ip)
 port = 5050
 socket_address = (host_ip, port)
 server_socket.bind(socket_address)
-server_socket.listen()
-print("Listening at", socket_address)
 
 
-def handle_client(address, client_socket):
-    try:
-        print('CLIENT {} CONNECTED!'.format(address))
-
-        # recebe o nome do video e a resolução que o cliente escolheu
-        video_name, resolution = pickle.loads(client_socket.recv(1024))
-        # carrega o video dos arquivos
-        video = find_video(client_socket, resolution, video_name)
-        # renderiza o video para o cliente
-        send_video(video, client_socket, resolution)
-
-        client_socket.close()
-
-    except Exception as e:
-        print(f"CLIENT {address} DISCONNECTED UNEXPECTEDLY, ERROR = {e}")
-        pass
+def handle_client(data, address):
+    print('CLIENT {} CONNECTED!'.format(address))
+    # recebe o nome do video e a resolução que o cliente escolheu
+    #(video_name, resolution), adress = pickle.loads(server_socket.recvfrom(1024))
+    # carrega o video dos arquivos
+    #video = find_video(resolution, video_name)
+    # renderiza o video para o cliente
+    #send_video(adress, video, resolution)
 
 
-def send_video(video, client_socket, resolution):
+def send_video(address, video, resolution):
     while video.isOpened():
         img, frame = video.read()
         if not img:
@@ -43,41 +33,53 @@ def send_video(video, client_socket, resolution):
 
         # definindo a resolução
         resolSize = {"240p": 240, "480p": 480, "720p": 720}
-        frame = imutils.resize(frame, width=int(resolSize.get(resolution)*1.7778), height=resolSize.get(resolution))
+        frame = imutils.resize(frame, width=int(resolSize.get(resolution)*0.7778), height=resolSize.get(resolution))
         # serializa o frame do vídeo
         a = pickle.dumps(frame)
         # empacota o frame serializado
         message = struct.pack("Q", len(a)) + a
-        # envia o pacote para o cliente
-        client_socket.sendall(message)
-        #recebe um input do teclado do cliente
+        server_socket.sendto(message, address)
+        # recebe um input do teclado do cliente
         key = cv2.waitKey(1) & 0xFF
         if key == ord("q"):
             break
-    client_socket.close()
     video.release()
 
 
-def find_video(client_socket, resolution, video_name):
+def find_video(address, resolution, video_name):
+    print("chegou aqui")
+    print(address)
     video = cv2.VideoCapture(f'../videos/{video_name}')
-
+    print(video)
     if not video.isOpened():
         error_message = f"Error: Video {video_name} not found for resolution {resolution}."
         print(error_message)
-        client_socket.send(pickle.dumps([404, error_message]))
-        client_socket.close()
+
+        server_socket.sendto(pickle.dumps([404, error_message]), address)
     else:
-        client_socket.send(pickle.dumps([204, ""]))
+        server_socket.sendto(pickle.dumps([204, ""]),address)
 
     return video
 
 
 def main():
+    print("WAITING FOR CLIENTS...")
     while True:
-        client_socket, address = server_socket.accept()
-        thread = threading.Thread(target=handle_client, args=(address, client_socket))
-        thread.start()
-        print("TOTAL CLIENTS ", threading.activeCount() - 1)
+        data, address = server_socket.recvfrom(1024)
+        msg = pickle.loads(data)
+        if msg[0] == 'REPRODUZIR_VIDEO':
+            thread = threading.Thread(target=handle_client, args=(data, address))
+            thread.start()
+            print("TOTAL CLIENTS ", threading.activeCount() - 1)
+            resposta = ['ENVIAR RESOLUCAO']
+            server_socket.sendto(pickle.dumps(resposta), address)
+
+        elif msg[0] == "VIDEO/RESOLUCAO":
+            print("Procurando video")
+            video = msg[1]
+            resolucao = msg[2]
+            video = find_video(address, resolucao, video)
+            send_video(address, video, resolucao)
 
 
 if __name__ == "__main__":
