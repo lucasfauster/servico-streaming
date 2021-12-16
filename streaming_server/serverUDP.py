@@ -1,13 +1,11 @@
 import pickle
 import threading
-
 import cv2
 import imutils
 import socket
 import time
 import base64
 
-clients = []
 
 BUFF_SIZE = 65536
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -19,12 +17,10 @@ socket_address = (host_ip, port)
 server_socket.bind(socket_address)
 print('Listening at:', socket_address)
 
-vid = None
-
 
 def find_video(video_name):
-	global vid
-	vid = cv2.VideoCapture(f'../videos/{video_name}')
+	video = cv2.VideoCapture(f'../videos/{video_name}')
+	return video
 
 
 def handle_client(host, port):
@@ -34,8 +30,7 @@ def handle_client(host, port):
 		if client_addr == addr:
 			msg = pickle.loads(msg)
 			video, resolution = msg
-			find_video(video)
-			print('GOT connection from ', client_addr)
+			vid = find_video(video)
 			if vid:
 				while vid.isOpened():
 					fps, st, frames_to_count, cnt = (0, 0, 20, 0)
@@ -58,17 +53,17 @@ def handle_client(host, port):
 						except:
 							pass
 					cnt += 1
+				vid.release()
 
 
 def main():
 	while True:
 		msg, address = server_socket.recvfrom(BUFF_SIZE)
 		if pickle.loads(msg) == 'REPRODUZIR_VIDEO':
-			clients.append(address)
 			thread = threading.Thread(target=handle_client, args=address)
 			thread.start()
-			print("TOTAL CLIENTS ", threading.activeCount() - 1)
-
+			print('GOT connection from ', address)
+			print("TOTAL CLIENTS ", threading.activeCount()-1)
 
 
 if __name__ == "__main__":
