@@ -11,8 +11,12 @@ client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
 host_name = socket.gethostname()
 host_ip = '127.0.1.1'
-print(host_ip)
 port = 5050
+
+
+def make_contact():
+    msg = pickle.dumps('REPRODUZIR_VIDEO')
+    client_socket.sendto(msg, (host_ip, port))
 
 
 def select_video_and_resolution():
@@ -51,8 +55,10 @@ def run_video():
 
 
 def main():
+    make_contact()
     select_video_and_resolution()
     run_video()
+
 
 if __name__ == "__main__":
     main()

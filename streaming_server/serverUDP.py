@@ -1,11 +1,13 @@
 import pickle
+import threading
+
 import cv2
 import imutils
 import socket
 import time
 import base64
 
-clients = {}
+clients = []
 
 BUFF_SIZE = 65536
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -25,31 +27,50 @@ def find_video(video_name):
 	vid = cv2.VideoCapture(f'../videos/{video_name}')
 
 
-while True:
-	msg, client_addr = server_socket.recvfrom(BUFF_SIZE)
-	msg = pickle.loads(msg)
-	video, resolution = msg
-	find_video(video)
-	print('GOT connection from ', client_addr)
-	if vid:
-		while vid.isOpened():
-			fps, st, frames_to_count, cnt = (0, 0, 20, 0)
-			_, frame = vid.read()
-			frame = imutils.resize(frame,width=int(resolution))
-			encoded, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY,80])
-			message = base64.b64encode(buffer)
-			server_socket.sendto(message, client_addr)
-			frame = cv2.putText(frame, 'FPS: '+str(fps), (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-			cv2.imshow('TRANSMITTING VIDEO', frame)
-			key = cv2.waitKey(1) & 0xFF
-			if key == ord('q'):
-				server_socket.close()
-				break
-			if cnt == frames_to_count:
-				try:
-					fps = round(frames_to_count/(time.time()-st))
-					st=time.time()
-					cnt = 0
-				except:
-					pass
-			cnt += 1
+def handle_client(host, port):
+	addr = (host, port)
+	while True:
+		msg, client_addr = server_socket.recvfrom(BUFF_SIZE)
+		if client_addr == addr:
+			msg = pickle.loads(msg)
+			video, resolution = msg
+			find_video(video)
+			print('GOT connection from ', client_addr)
+			if vid:
+				while vid.isOpened():
+					fps, st, frames_to_count, cnt = (0, 0, 20, 0)
+					_, frame = vid.read()
+					frame = imutils.resize(frame, width=int(resolution))
+					encoded, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY,80])
+					message = base64.b64encode(buffer)
+					server_socket.sendto(message, client_addr)
+					frame = cv2.putText(frame, 'FPS: '+str(fps), (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+					cv2.imshow('TRANSMITTING VIDEO', frame)
+					key = cv2.waitKey(1) & 0xFF
+					if key == ord('q'):
+						server_socket.close()
+						break
+					if cnt == frames_to_count:
+						try:
+							fps = round(frames_to_count/(time.time()-st))
+							st=time.time()
+							cnt = 0
+						except:
+							pass
+					cnt += 1
+
+
+def main():
+	while True:
+		msg, address = server_socket.recvfrom(BUFF_SIZE)
+		if pickle.loads(msg) == 'REPRODUZIR_VIDEO':
+			clients.append(address)
+		for client in clients:
+			thread = threading.Thread(target=handle_client, args=client)
+			thread.start()
+			print("TOTAL CLIENTS ", threading.activeCount() - 1)
+			print(client)
+
+
+if __name__ == "__main__":
+	main()
