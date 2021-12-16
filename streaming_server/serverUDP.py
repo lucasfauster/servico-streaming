@@ -65,11 +65,10 @@ def main():
 		msg, address = server_socket.recvfrom(BUFF_SIZE)
 		if pickle.loads(msg) == 'REPRODUZIR_VIDEO':
 			clients.append(address)
-		for client in clients:
-			thread = threading.Thread(target=handle_client, args=client)
+			thread = threading.Thread(target=handle_client, args=address)
 			thread.start()
 			print("TOTAL CLIENTS ", threading.activeCount() - 1)
-			print(client)
+
 
 
 if __name__ == "__main__":
