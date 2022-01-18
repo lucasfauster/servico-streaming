@@ -3,7 +3,7 @@ import pickle
 import socket
 import threading
 
-from service_manager_server.user_manager import UserManager
+from user_manager import UserManager
 
 
 class ServiceManager:
@@ -11,7 +11,7 @@ class ServiceManager:
     def __init__(self):
         logging.basicConfig(level=logging.INFO)
         self.log = logging.getLogger("ServiceManager")
-        port = 5051
+        port = 6060
 
         host_name = socket.gethostname()
         host_ip = socket.gethostbyname(host_name)
@@ -80,11 +80,19 @@ class ServiceManager:
     def handle_add_to_group(self, message, user_socket, address):
         user = self.user_manager.get_user_from_address(address)
         self.log.info("method=handle_add_to_group, action=adding user {} to group {}".format(message[1], user.group))
-        self.user_manager.add_group_to_user(premium_socket=user_socket, name=message[1], group=user.group)
+        resp = self.user_manager.add_group_to_user(premium_socket=user_socket, name=message[1], group=user.group)
+        if not resp:
+            self.log.error("method=handle_add_to_group, error=User not found "
+                               "unexpectedly with address={}, exception=User not found".format(address))
+            user_socket.send(pickle.dumps(["ADD_USUARIO_GRUPO_ERR"]))
 
     def handle_remove_from_group(self, message, user_socket, address=None):
         self.log.info("method=handle_remove_from_group, action=removing user {} in group list".format(message[1]))
-        self.user_manager.remove_group_to_user(premium_socket=user_socket, name=message[1])
+        resp = self.user_manager.remove_group_to_user(premium_socket=user_socket, name=message[1])
+        if not resp:
+            self.log.error("method=handle_remove_from_group, error=User not found "
+                               "unexpectedly with address={}, exception=User not found".format(address))
+            user_socket.send(pickle.dumps(["REMOVER_USUARIO_GRUPO_ERR"]))
 
     def handle_get_group(self, user_socket, address, message=None):
         user = self.user_manager.get_user_from_address(address)

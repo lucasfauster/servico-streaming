@@ -1,7 +1,7 @@
 import pickle
 import uuid
 
-from service_manager_server.user import User
+from user import User
 
 
 class UserManager:
@@ -39,12 +39,16 @@ class UserManager:
             if user.name == name:
                 user.group = group
                 premium_socket.send(pickle.dumps(["ADD_USUARIO_GRUPO_ACK"]))
+                return True
+        return False
 
     def remove_group_to_user(self, premium_socket, name):
         for user in self.user_list:
             if user.name == name:
                 user.group = None
                 premium_socket.send(pickle.dumps(["REMOVER_USUARIO_GRUPO_ACK"]))
+                return True
+        return False
 
     def get_users_from_group(self, group):
         group_list = []

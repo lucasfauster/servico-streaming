@@ -10,7 +10,7 @@ server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, BUFF_SIZE)
 host_name = socket.gethostname()
 host_ip = '127.0.1.1'
-port = 6000
+port = 5050
 socket_address = (host_ip, port)
 server_socket.bind(socket_address)
 print('ESCUTANDO EM:', socket_address)
