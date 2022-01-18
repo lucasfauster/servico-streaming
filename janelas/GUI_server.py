@@ -7,16 +7,16 @@ from tkinter.filedialog import askopenfile
 import cv2
 import time
 import imutils
+from shutil import copyfile
 
 
 def choose_file(path_input):
-    path_file = askopenfile(mode='r', filetypes=[('Vídeos', '*mp4')], initialdir='servico-steaming')
-    path_file = path_file.name.split('servico-streaming')
-    relative_path = ".." + path_file[1]
+    path_file = askopenfile(mode='r', filetypes=[('Vídeos', '*mp4')])
+    path_file = path_file.name
     if path_file:
         path_input.configure(state=NORMAL)
         path_input.delete(0, END)
-        path_input.insert(0, relative_path)
+        path_input.insert(0, path_file)
         path_input.configure(state=DISABLED)
 
 
@@ -99,6 +99,8 @@ def save_video(name_input, option, path_input, output_label, window, add_video_b
     name = name_input.get()
     resolution = option.get()
     path = path_input.get()
+    final_path = f'../videos/{resolution}/{name}.mp4'
+    copyfile(path, final_path)
 
     if validates(name, resolution, path, output_label):
         barra_progresso = Progressbar(window, orient=HORIZONTAL, length=300, mode='determinate', style='TProgressbar')
@@ -109,10 +111,10 @@ def save_video(name_input, option, path_input, output_label, window, add_video_b
             time.sleep(0.2)
         barra_progresso.destroy()
         if transaction == "CREATE":
-            create_video_transaction(name, resolution, path)  # Chamada SQL
+            create_video_transaction(name, resolution, final_path)  # Chamada SQL
             output_label.config(text='Vídeo adicionado com sucesso!', foreground='green')
         elif transaction == "UPDATE" and id_video:
-            update_videos_transaction(id_video, name, resolution, path)  # Chamada SQL
+            update_videos_transaction(id_video, name, resolution, final_path)  # Chamada SQL
             output_label.config(text='Vídeo atualizado com sucesso!', foreground='green')
         add_video_button.destroy()
         quit_button = Button(window, text='Fechar', command=lambda: window.destroy())
