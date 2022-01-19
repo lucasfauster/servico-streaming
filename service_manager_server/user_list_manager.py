@@ -4,7 +4,7 @@ import uuid
 from user import User
 
 
-class UserManager:
+class UserListManager:
 
     def __init__(self):
         self.user_list = []
@@ -53,6 +53,6 @@ class UserManager:
     def get_users_from_group(self, group):
         group_list = []
         for user in self.user_list:
-            if user.group == group:
-                group_list.append(user.name)
+            if group is not None and user.group == group:
+                group_list.append(user)
         return group_list

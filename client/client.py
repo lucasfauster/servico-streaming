@@ -1,17 +1,18 @@
 from clientUDP import ClientUDP
 from clientTCP import ClientTCP
 
+
 def main():
     opt = ''
     client_udp = ClientUDP()
     client_tcp = ClientTCP()
-    
+
     user_name = input("Digite seu nome: ")
     user_type = input("Digite o tipo de usuário ( Premium/Convidado ): ")
     if not client_tcp.log_in(user_name, user_type):
         return
 
-    user_info =  client_tcp.get_user_info(user_name, user_type)
+    user_info = client_tcp.get_user_info(user_name, user_type)
     if not user_info:
         print("Usuário não foi cadastrado corretamente")
         return
@@ -33,13 +34,13 @@ def main():
                 client_udp.run_video()
                 break
         elif opt == '3':
-            client_tcp.create_group(user_info["Tipo"])
+            client_tcp.create_group()
         elif opt == '4':
-            client_tcp.add_to_group(user_info["Tipo"])
+            client_tcp.add_to_group()
         elif opt == '5':
-            client_tcp.get_group(user_info["Tipo"])
+            client_tcp.get_group()
         elif opt == '6':
-            client_tcp.remove_from_group(user_info["Tipo"])
+            client_tcp.remove_from_group()
     client_tcp.log_out()
 
 
