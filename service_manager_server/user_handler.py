@@ -8,7 +8,7 @@ from service_manager_server.user_list_manager import UserListManager
 class UserHandler:
     def __init__(self):
         logging.basicConfig(level=logging.INFO)
-        self.log = logging.getLogger("ServiceManager")
+        self.log = logging.getLogger("UserHandler")
 
         self.user_manager = UserListManager()
 
