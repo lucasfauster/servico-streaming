@@ -1,4 +1,4 @@
-from service_manager_server.service_manager import ServiceManager
+from service_manager import ServiceManager
 
 
 def main():

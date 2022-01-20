@@ -28,6 +28,12 @@ class UserListManager:
                 return user
         return None
 
+    def get_user_from_name(self, name):
+        for user in self.user_list:
+            if user.name == name:
+                return user
+        return None
+
     def create_group(self, address):
         user = self.get_user_from_address(address)
         user.group = uuid.uuid4()

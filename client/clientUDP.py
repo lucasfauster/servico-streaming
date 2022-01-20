@@ -14,6 +14,12 @@ class ClientUDP:
         self.host_ip = '127.0.1.1'
         self.port = 5050
         self.video_name = ""
+        self.address = (self.host_ip, self.port)
+
+    def send_message(self, message):
+        self.client_socket.sendto(pickle.dumps(message), self.address)
+        resp, _ = self.client_socket.recvfrom(self.BUFF_SIZE)
+        return pickle.loads(resp)
 
     def has_video(self):
         msg, _ = self.client_socket.recvfrom(self.BUFF_SIZE)
@@ -24,17 +30,22 @@ class ClientUDP:
             print(f"ERRO: {msg}")
             return False
 
-    def select_video_and_resolution(self):
-        self.video_name = input("DIGITE O NOME DO VÍDEO: ")
-        res_avaliable = ["240p", "480p", "720p"]
-        resolution = input('DIGITE A RESOLUÇÃO: ')
+    def select_video_and_resolution(self, user_name):
+        resp = self.send_message(["GET_USER_INFORMATION", user_name])
+        if resp[0] == "AUTORIZADO":
+            self.video_name = input("DIGITE O NOME DO VÍDEO: ")
+            res_avaliable = ["240p", "480p", "720p"]
+            resolution = input('DIGITE A RESOLUÇÃO: ')
 
-        if resolution not in res_avaliable:
-            print('RESOLUÇÃO NÃO DISPONÍVEL')
-            return
+            if resolution not in res_avaliable:
+                print('RESOLUÇÃO NÃO DISPONÍVEL')
+                return False
 
-        msg = pickle.dumps(['REPRODUZIR_VIDEO', self.video_name, resolution])
-        self.client_socket.sendto(msg, (self.host_ip, self.port))
+            self.send_message(['REPRODUZIR_VIDEO', self.video_name, resolution])
+            return True
+        else:
+            print(resp[0])
+            return False
 
     def run_video(self):
         self.client_socket.settimeout(1)
@@ -55,10 +66,7 @@ class ClientUDP:
             print("VIDEO TERMINOU!")
 
     def list_videos(self):
-        msg = pickle.dumps(['LISTAR_VIDEOS'])
-        self.client_socket.sendto(msg, (self.host_ip, self.port))
-        resposta, _ = self.client_socket.recvfrom(self.BUFF_SIZE)
-        resposta = pickle.loads(resposta)
+        resposta = self.send_message(['LISTAR_VIDEOS'])
         if type(resposta) is dict:
             print("VÍDEOS DISPONÍVEIS: ")
             for video in resposta:

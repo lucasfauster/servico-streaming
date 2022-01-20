@@ -12,11 +12,6 @@ def main():
     if not client_tcp.log_in(user_name, user_type):
         return
 
-    user_info = client_tcp.get_user_info(user_name, user_type)
-    if not user_info:
-        print("Usuário não foi cadastrado corretamente")
-        return
-
     while opt != '0':
         opt = input("""\nESCOLHA UMA OPÇÃO:
                     1) LISTAR VÍDEOS DISPONÍVEIS
@@ -29,8 +24,8 @@ def main():
         if opt == '1':
             client_udp.list_videos()
         elif opt == '2':
-            client_udp.select_video_and_resolution()
-            if client_udp.has_video():
+            resp = client_udp.select_video_and_resolution(user_name)
+            if resp and client_udp.has_video():
                 client_udp.run_video()
                 break
         elif opt == '3':
@@ -41,6 +36,7 @@ def main():
             client_tcp.get_group()
         elif opt == '6':
             client_tcp.remove_from_group()
+
     client_tcp.log_out()
 
 

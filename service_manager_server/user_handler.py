@@ -2,7 +2,7 @@ import logging
 import pickle
 import threading
 
-from service_manager_server.user_list_manager import UserListManager
+from user_list_manager import UserListManager
 
 
 class UserHandler:

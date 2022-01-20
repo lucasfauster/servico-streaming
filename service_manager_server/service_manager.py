@@ -5,7 +5,7 @@ import socket
 import threading
 import uuid
 
-from service_manager_server.user_handler import UserHandler
+from user_handler import UserHandler
 
 
 class ServiceManager:
@@ -64,6 +64,11 @@ class ServiceManager:
                     self.streaming_socket.send(pickle.dumps(["ENDERECO_DOS_USUARIOS", users_addresses]))
 
                 else:
-                    user = self.user_handler.user_manager.get_user_from_address(address=message[1])
-                    self.log.info(f"method=handle_streaming, message=sending user info: {user.user_info}")
-                    self.streaming_socket.send(pickle.dumps(["STATUS_DO_USUARIO", user.user_info]))
+                    user = self.user_handler.user_manager.get_user_from_name(message[1])
+                    if user:
+                        self.log.info(f"method=handle_streaming, message=sending user info: {user.user_type}")
+                        self.streaming_socket.send(pickle.dumps(["STATUS_DO_USUARIO", user.user_type]))
+                    else: 
+                        self.log.error(
+                        f"method=handle_streaming, error=User not found address={self.streaming_address}, exception=User not found")
+                        self.streaming_socket.send(pickle.dumps(["ERROR"]))
