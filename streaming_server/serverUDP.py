@@ -101,6 +101,9 @@ class serverUDP:
                 else:
                     msg = pickle.dumps(["NÃO TEM PERMISSÃO PARA REPRODUZIR VÍDEOS, POR FAVOR MUDE SUA CLASSIFICAÇÃO"])
                 self.server_socket.sendto(msg, address)
+            elif type(msg) is list and msg[0] == 'GET_ADDRESS':
+                msg = pickle.dumps([address])
+                self.server_socket.sendto(msg, address)
 
 
 if __name__ == "__main__":

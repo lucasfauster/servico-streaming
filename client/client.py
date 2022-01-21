@@ -7,6 +7,8 @@ def main():
     client_udp = ClientUDP()
     client_tcp = ClientTCP()
 
+    client_tcp.address_UDP = client_udp.address
+    
     user_name = input("Digite seu nome: ")
     user_type = input("Digite o tipo de usuário ( Premium/Convidado ): ")
     if not client_tcp.log_in(user_name, user_type):

@@ -9,8 +9,8 @@ class UserListManager:
     def __init__(self):
         self.user_list = []
 
-    def add_user(self, name, address, user_socket, user_type):
-        new_user = User(name=name, socket=user_socket, address=address, user_type=user_type)
+    def add_user(self, name, address, address_UDP, user_socket, user_type):
+        new_user = User(name=name, socket=user_socket, address=address, address_UDP=address_UDP, user_type=user_type)
         self.user_list.append(new_user)
         user_socket.send(pickle.dumps(["ENTRAR_NA_APP_ACK"]))
 

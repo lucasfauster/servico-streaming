@@ -51,10 +51,10 @@ class UserHandler:
     def handle_login(self, message, user_socket, address):
         user = self.user_manager.get_user_from_address(address)
         if user is None:
-            name, user_type = message[1]
+            name, user_type, address_UDP = message[1]
             self.log.info(
-                "method=handle_login, message=adding user {} in user list with type {}".format(name, user_type))
-            self.user_manager.add_user(name=name, address=address, user_socket=user_socket, user_type=user_type)
+                "method=handle_login, message=adding user {} in user list with type {} and address_UDP {}".format(name, user_type, address_UDP))
+            self.user_manager.add_user(name=name, address=address, address_UDP=address_UDP, user_socket=user_socket, user_type=user_type)
 
         else:
             user_info = user.get_user_info()

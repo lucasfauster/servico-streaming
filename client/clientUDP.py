@@ -10,14 +10,14 @@ class ClientUDP:
         self.BUFF_SIZE = 65536
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.BUFF_SIZE)
-        self.host_name = socket.gethostname()
         self.host_ip = '127.0.1.1'
         self.port = 5050
         self.video_name = ""
-        self.address = (self.host_ip, self.port)
+        self.server_address = (self.host_ip, self.port)
+        self.address = self.get_address()
 
     def send_recv_message(self, message):
-        self.client_socket.sendto(pickle.dumps(message), self.address)
+        self.client_socket.sendto(pickle.dumps(message), self.server_address)
         resp, _ = self.client_socket.recvfrom(self.BUFF_SIZE)
         return pickle.loads(resp)
 
@@ -46,10 +46,10 @@ class ClientUDP:
             return False
         if option == "SINGLE":
             message = ['REPRODUZIR_VIDEO', self.video_name, resolution, "SINGLE"]
-            self.client_socket.sendto(pickle.dumps(message), self.address)
+            self.client_socket.sendto(pickle.dumps(message), self.server_address)
         else:
             message = ['REPRODUZIR_VIDEO', self.video_name, resolution, "GROUP", user_name]
-            self.client_socket.sendto(pickle.dumps(message), self.address)
+            self.client_socket.sendto(pickle.dumps(message), self.server_address)
 
         return True
 
@@ -96,3 +96,6 @@ class ClientUDP:
     def get_in_room(self):
         if self.has_video("GROUP"):
             self.run_video()
+
+    def get_address(self):
+        return self.send_recv_message(['GET_ADDRESS'])[0]
