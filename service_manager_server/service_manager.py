@@ -56,8 +56,10 @@ class ServiceManager:
             self.log.info(f"method=handle_streaming, message={message[0]}")
 
             if message[0] == "GET_USER_INFORMATION":
-                if isinstance(message[1], uuid.UUID):
-                    users = self.user_handler.user_manager.get_users_from_group(message[1])
+                if message[2] == "GROUP":
+                    user = self.user_handler.user_manager.get_user_from_name(message[1])
+                    print(user.get_user_info())
+                    users = self.user_handler.user_manager.get_users_from_group(user.group)
                     users_addresses = [user.address for user in users]
                     self.log.info(f"method=handle_streaming, message=sending users "
                                   f"addresses {users_addresses} from group {message[1]}")
