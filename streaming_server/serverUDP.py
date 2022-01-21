@@ -26,11 +26,18 @@ class serverUDP:
 
 
     def get_user_type(self, user_name):
-        self.service_socket.send(pickle.dumps(["GET_USER_INFORMATION", user_name]))
+        self.service_socket.send(pickle.dumps(["GET_USER_INFORMATION", user_name, "SINGLE"]))
         resp = pickle.loads(self.service_socket.recv(1024))
         if resp[0] == "STATUS_DO_USUARIO":
             return resp[1]
-        print("ERRO AO BUSCAR INFORMAÇÕES DO USUÁRIO")
+        print("ERRO AO BUSCAR INFORMAÇÕESDO USUÁRIO")
+
+    def get_user_group(self, user_name):
+        self.service_socket.send(pickle.dumps(["GET_USER_INFORMATION", user_name, "GROUP"]))
+        resp = pickle.loads(self.service_socket.recv(1024))
+        if resp[0] == "ENDERECO_DOS_USUARIOS":
+            return resp[1]
+        print("ERRO AO BUSCAR INFORMAÇÕES DO GRUPO  DO USUÁRIO")
 
     def find_video(self, video_name, resolution):
         # noinspection PyArgumentList
@@ -42,8 +49,9 @@ class serverUDP:
         vid = self.find_video(video, resolution)
         if vid.isOpened():
             print(f"ENVIANDO VÍDEO {video} COM RESOLUÇÃO {resolution} PARA {client_addr}")
-            msg = f"REPRODUZINDO O VÍDEO {video}, COM RESOLUÇÃO {resolution}."
-            self.server_socket.sendto(pickle.dumps(msg), client_addr)
+            message = pickle.dumps(["REPRODUZINDO"])
+            for addr in client_addr:
+                self.server_socket.sendto(message, addr)
             while vid.isOpened():
                 img, frame = vid.read()
                 if not img:
@@ -52,13 +60,14 @@ class serverUDP:
                 frame = imutils.resize(frame, width=600)
                 encoded, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 50])
                 message = base64.b64encode(buffer)
-                self.server_socket.sendto(message, client_addr)
+                for addr in client_addr:
+                    self.server_socket.sendto(message, addr)
             vid.release()
         else:
             msg = f"VIDEO {video} NÃO ENCONTRADO PARA RESOLUÇÃO {resolution}."
             print(msg)
-            msg = pickle.dumps(msg)
-            self.server_socket.sendto(msg, client_addr)
+            for addr in client_addr:
+                self.server_socket.sendto(pickle.dumps(msg), addr)
 
 
     def main(self):
@@ -66,11 +75,18 @@ class serverUDP:
             msg, address = self.server_socket.recvfrom(self.BUFF_SIZE)
             msg = pickle.loads(msg)
             if type(msg) is list and msg[0] == 'REPRODUZIR_VIDEO':
-
-                video = msg[1]
-                resolution = msg[2]
-                thread = threading.Thread(target=self.send_video, args=(address, video, resolution))
-                thread.start()
+                if msg[3] == "SINGLE":
+                    video = msg[1]
+                    resolution = msg[2]
+                    thread = threading.Thread(target=self.send_video, args=([address], video, resolution))
+                    thread.start()
+                else:
+                    user_name = msg[4]
+                    addresses = self.get_user_group(user_name)
+                    video = msg[1]
+                    resolution = msg[2]
+                    thread = threading.Thread(target=self.send_video, args=(addresses, video, resolution))
+                    thread.start()
 
             elif type(msg) is list and msg[0] == 'LISTAR_VIDEOS':
                 msg = pickle.dumps(self.lista_videos)
