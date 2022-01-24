@@ -90,8 +90,8 @@ class ClientUDP:
         has_permission = self.check_permission(user_name)
         if has_permission:
             video_selected = self.select_video_and_resolution(option, user_name)
-        if video_selected and self.has_video("SINGLE"):
-            self.run_video()
+            if video_selected and self.has_video("SINGLE"):
+                self.run_video()
         
     def get_in_room(self):
         if self.has_video("GROUP"):
