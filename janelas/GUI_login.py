@@ -1,17 +1,21 @@
 from GUI_client import *
+from client.client import Client
 
 
 def login():
     name = name_input.get()
     option = option_input.get()
     print(option)
+    user_type = {1: "convidado", 2: "premium"}
     if not name:
         output_label.config(text='Nome não pode ficar em branco!', foreground='red')
     else:
+        client = Client()
+        client.login(name, user_type.get(option))
         window.title('Biting Wire - Seu Programa de Streaming Favorito')
         window.geometry("750x510")
         login_frame.destroy()
-        render_client_gui(window)
+        render_client_gui(window, client)
 
 
 # #  Janela
@@ -55,7 +59,6 @@ radio_button2 = Radiobutton(type_frame, text="Premium", variable=option_input, v
 radio_button2.configure(background='white', highlightthickness=0)
 radio_button1.pack(side=LEFT, padx=10)
 radio_button2.pack(padx=10)
-
 
 menu_frame = Frame(login_frame)
 menu_frame.pack()

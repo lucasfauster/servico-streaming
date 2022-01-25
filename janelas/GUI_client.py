@@ -3,21 +3,25 @@ from tkinter import ttk
 from PIL import Image, ImageTk
 
 
-def add_user_to_group(main, group, group_table_view, name_input, output_label):
+def add_user_to_group(main, group_table_view, name_input, output_label, client):
     name = name_input.get()
     if name:
-        group.append(name)
-        refresh_list_group(group, group_table_view)
-        output_label.config(text=f'Usuário "{name}" adicionado ao grupo com sucesso!', foreground='green')
+        if client.add_to_group(name):
+            output_label.config(text=f'Usuário "{name}" adicionado ao grupo com sucesso!', foreground='green')
+        else:
+            output_label.config(text=f'Usuário "{name} não encontrado!', foreground='red')
+
     else:
         output_label.config(text='Nome não pode ficar em branco!', foreground='red')
+    group = client.get_group()
+    refresh_list_group(group, group_table_view)
     main.destroy()
 
 
-def create_group(create_group_button, window, main_frame, menu_frame, table_view, output_label):
+def create_group(create_group_button, window, main_frame, menu_frame, table_view, output_label, client):
     output_label.config(text='')
     create_group_button.destroy()
-    render_group_table(window, main_frame, menu_frame, table_view, output_label)
+    render_group_table(window, main_frame, menu_frame, table_view, output_label, client)
     output_label.config(text='Grupo criado com sucesso!', foreground='green')
 
 
@@ -27,7 +31,7 @@ def was_added_group(create_group_button, output_label):
     output_label.config(text='Você foi incluído(a) em um grupo! Aguarde a reprodução do vídeo começar.', foreground='green')
 
 
-def add_user(window, group, group_table_view, output_label):
+def add_user(window, group_table_view, output_label, client):
     output_label.config(text='')
     main = Toplevel(window)
     main.title('Adicionar usuário ao grupo')
@@ -39,44 +43,46 @@ def add_user(window, group, group_table_view, output_label):
     name_input = Entry(main, width=20)
     name_input.pack()
     add_user_button = Button(main, text="Adicionar", width=12, height=2,
-                             command=lambda: add_user_to_group(main, group, group_table_view, name_input, output_label), bg="orange")
+                             command=lambda: add_user_to_group(main, group_table_view, name_input, output_label, client), bg="orange")
     add_user_button.pack(padx=10)
 
 
-def remove_user(group, group_table_view, output_label):
+def remove_user(group_table_view, output_label, client):
     output_label.config(text='')
     selected = group_table_view.focus()
     if selected:
         user = group_table_view.item(selected, 'value')[0]
-        group.remove(user)
-        refresh_list_group(group, group_table_view)
-        output_label.config(text=f'Usuário "{user}" foi removido(a) com sucesso!', foreground='green')
+        if client.remove_from_group(user):
+            output_label.config(text=f'Usuário "{user}" foi removido(a) com sucesso!', foreground='green')
+        else:
+            output_label.config(text=f'Usuário "{user}" não encontrado!', foreground='red')
     else:
         output_label.config(text='Nenhum usuário selecionado!', foreground='red')
+    group = client.get_group()
+    refresh_list_group(group, group_table_view)
 
 
-def play_video(table_view, output_label):
+def play_video(table_view, output_label, client):
     output_label.config(text='')
     selected = table_view.focus()
     if selected:
         name, resolution = table_view.item(selected, 'value')
-        print(name,resolution)
-        # # Integrar aqui
+        client.play_video(name, resolution)
     else:
         output_label.config(text='Nenhum vídeo selecionado!', foreground='red')
 
 
-def play_video_group(table_view, output_label):
+def play_video_group(table_view, output_label, client):
     output_label.config(text='')
     selected = table_view.focus()
     if selected:
         name, resolution = table_view.item(selected, 'value')
-        print(name, resolution)
+        client.play_video_to_group(name, resolution)
     else:
         output_label.config(text='Nenhum vídeo selecionado!', foreground='red')
 
 
-def render_group_table(window, main_frame, menu_frame, table_view, output_label):
+def render_group_table(window, main_frame, menu_frame, table_view, output_label, client):
     group_table_frame = Frame(main_frame)
     group_table_frame.pack(side=LEFT, padx=50, pady=10)
     group_table_frame.configure(background='white')
@@ -93,21 +99,21 @@ def render_group_table(window, main_frame, menu_frame, table_view, output_label)
     group_table_view.tag_configure('oddrow', background="white")
     group_table_view.tag_configure('evenrow', background="orange")
 
-    group = []
+    client.create_group()
 
     play_group_button = Button(menu_frame, text="Reproduzir para o grupo", width=20, height=2, bg="orange",
-                               command=lambda: play_video_group(table_view, output_label))
+                               command=lambda: play_video_group(table_view, output_label, client))
     play_group_button.pack(side=LEFT, padx=5)
 
     add_user_button = Button(menu_frame, text="Adicionar usuário ao grupo", width=20, height=2, bg="orange",
-                             command=lambda: add_user(window, group, group_table_view, output_label))
+                             command=lambda: add_user(window, group_table_view, output_label, client))
     add_user_button.pack(side=LEFT, padx=5)
 
     remove_user_button = Button(menu_frame, text="Remover usuário do grupo", width=20, height=2, bg="orange",
-                                command=lambda: remove_user(group, group_table_view, output_label))
+                                command=lambda: remove_user(group_table_view, output_label, client))
     remove_user_button.pack()
 
-    group = ['Ana', 'Bia', 'Célia', 'Diana', 'Eduardo', 'Felipe', 'Giovani', 'Hugo']  # # Exemplo temporário
+    group = client.get_group()
     list_group(group, group_table_view)
 
 
@@ -137,7 +143,7 @@ def list_videos(videos, table_view):
         count += 1
 
 
-def render_client_gui(window):
+def render_client_gui(window, client):
     # Logo
     logo_frame = Frame(window)
     logo_frame.pack(pady=5)
@@ -184,13 +190,13 @@ def render_client_gui(window):
     menu_frame.pack()
     menu_frame.configure(background='white')
     play_button = Button(menu_frame, text="Reproduzir Vídeo", width=12, height=2, bg="orange",
-                         command=lambda: play_video(table_view, output_label))
+                         command=lambda: play_video(table_view, output_label, client))
     play_button.pack(side=LEFT, padx=10)
     create_group_button = Button(menu_frame, text="Criar grupo", width=12, height=2, bg="orange",
                                  command=lambda: create_group(create_group_button, window, main_frame, menu_frame,
-                                                              table_view, output_label))
+                                                              table_view, output_label, client))
     create_group_button.pack(side=LEFT, padx=10)
 
-    videos = [['Animacao', '240p'], ['Animacao', '480p'], ['Animacao', '720p']]
+    videos = client.list_videos()
     list_videos(videos, table_view)
     window.mainloop()

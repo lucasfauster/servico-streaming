@@ -24,9 +24,11 @@ class serverUDP:
 
         self.active_clients = []
 
-        self.lista_videos = {'1': ['animacao.mp4', '240p'], '2': ['animacao.mp4', '480p'],
-                             '3': ['animacao.mp4', '720p'],
-                             '4': ['pacman.mp4', '240p'], '5': ['pacman.mp4', '480p'], '6': ['pacman.mp4', '720p']}
+        self.lista_videos = [
+            ['animacao.mp4', '240p'], ['animacao.mp4', '480p'],
+            ['animacao.mp4', '720p'], ['pacman.mp4', '240p'],
+            ['pacman.mp4', '480p'], ['pacman.mp4', '720p']
+        ]
 
     def get_user_type(self, user_name):
         self.service_socket.send(pickle.dumps(["GET_USER_INFORMATION", user_name, "SINGLE"]))

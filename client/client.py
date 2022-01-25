@@ -1,51 +1,51 @@
-from clientUDP import ClientUDP
-from clientTCP import ClientTCP
+from client.clientUDP import ClientUDP
+from client.clientTCP import ClientTCP
 
 
-def main():
-    opt = ''
-    client_udp = ClientUDP()
-    client_tcp = ClientTCP()
+class Client:
 
-    client_tcp.address_UDP = client_udp.address
+    def __init__(self):
+        self.user_name = ''
+        self.user_type = ''
+        self.client_udp = ClientUDP()
 
-    user_name = input("Digite seu nome: ")
-    user_type = input("Digite o tipo de usuário ( Premium/Convidado ): ")
-    if not client_tcp.log_in(user_name, user_type):
-        return
+        self.client_tcp = ClientTCP()
 
-    while opt != '0':
-        opt = input("""\nESCOLHA UMA OPÇÃO:
-                    1) LISTAR VÍDEOS DISPONÍVEIS
-                    2) REPRODUZIR UM VÍDEO
-                    3) CRIAR GRUPO
-                    4) ADICIONAR USUÁRIO AO GRUPO
-                    5) VER SEU GRUPO
-                    6) REMOVER USUÁRIO DO GRUPO
-                    7) REPRODUZIR VIDEO EM GRUPO
-                    8) ENTRAR NA SALA DO GRUPO
-                    0) SAIR\n""")
-        if opt == '1':
-            client_udp.list_videos()
-        elif opt == '2':
-            client_udp.play_video(user_name=user_name)
-        elif opt == '3':
-            client_tcp.create_group()
-        elif opt == '4':
-            client_tcp.add_to_group()
-        elif opt == '5':
-            client_tcp.get_group()
-        elif opt == '6':
-            client_tcp.remove_from_group()
-        elif opt == '7':
-            client_udp.play_video(user_name=user_name, option="GROUP")
-        elif opt == '8':
-            client_udp.get_in_room()
-        elif opt == '0':
-            client_tcp.log_out()
-        else:
-            print("OPÇÃO INVÁLIDA")
+        self.client_tcp.address_UDP = self.client_udp.address
 
+    def login(self, user_name, user_type):
+        self.user_name = user_name
+        self.user_type = user_type
+        self.client_tcp.log_in(user_name, user_type)
 
-if __name__ == "__main__":
-    main()
+    def list_videos(self):
+        return self.client_udp.list_videos()
+
+    def play_video(self, video_name, resolution):
+        self.client_udp.play_video(user_name=self.user_name, video_name=video_name, resolution=resolution)
+
+    def create_group(self):
+        self.client_tcp.create_group()
+
+    def add_to_group(self, name):
+        return self.client_tcp.add_to_group(name)
+
+    def get_group(self):
+        return self.client_tcp.get_group()
+
+    def remove_from_group(self, name):
+        return self.client_tcp.remove_from_group(name)
+
+    def play_video_to_group(self, video_name, resolution):
+        self.client_udp.play_video(user_name=self.user_name, video_name=video_name, resolution=resolution, option="GROUP")
+
+    def get_in_group_room(self):
+        return self.client_udp.get_in_group_room()
+
+    def has_group(self):
+        group = self.client_tcp.get_group()
+        return len(group) > 1
+
+    def log_out(self):
+        self.client_tcp.log_out()
+

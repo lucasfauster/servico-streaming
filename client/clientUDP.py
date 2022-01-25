@@ -40,14 +40,10 @@ class ClientUDP:
             print("NÃO HÁ VIDEO A SER EXIBIDO")
             return False
 
-    def select_video_and_resolution(self, option, user_name):
-        self.video_name = input("DIGITE O NOME DO VÍDEO: ")
-        res_avaliable = ["240p", "480p", "720p"]
-        resolution = input('DIGITE A RESOLUÇÃO: ')
+    def select_video_and_resolution(self, video_name, resolution, user_name, option):
 
-        if resolution not in res_avaliable:
-            print('RESOLUÇÃO NÃO DISPONÍVEL')
-            return False
+        self.video_name = video_name
+
         if option == "SINGLE":
             message = ['REPRODUZIR_VIDEO', self.video_name, resolution, "SINGLE"]
             self.client_socket.sendto(pickle.dumps(message), self.server_address)
@@ -88,19 +84,16 @@ class ClientUDP:
 
     def list_videos(self):
         resposta = self.send_recv_message(['LISTAR_VIDEOS'])
-        if type(resposta) is dict:
-            print("VÍDEOS DISPONÍVEIS: ")
-            for video in resposta:
-                print(f'{resposta[video][0]} - {resposta[video][1]}')
+        return resposta
 
-    def play_video(self, user_name, option="SINGLE"):
+    def play_video(self, user_name, video_name, resolution, option="SINGLE"):
         has_permission = self.check_permission(user_name)
         if has_permission:
-            video_selected = self.select_video_and_resolution(option, user_name)
+            video_selected = self.select_video_and_resolution(video_name, resolution, user_name, option)
             if video_selected and self.has_video("SINGLE"):
                 self.run_video()
 
-    def get_in_room(self):
+    def get_in_group_room(self):
         if self.has_video("GROUP"):
             self.run_video()
 

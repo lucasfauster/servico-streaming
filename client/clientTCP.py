@@ -50,28 +50,32 @@ class ClientTCP:
             else:
                 print("Erro ao criar grupo")
 
-    def add_to_group(self):
-        chosen_user = input("Digite o nome do usuário: ")
+    def add_to_group(self, chosen_user):
         resp = self.send_recv_message(["ADD_USUARIO_GRUPO", chosen_user])
         if self.has_permission(resp[0]):
             if resp[0] == "ADD_USUARIO_GRUPO_ACK":
                 print("Usuário adicionado ao grupo com sucesso!")
+                return True
             else:
                 print("Erro ao adicionar usuário ao grupo")
+                return False
 
     def get_group(self):
         resp = self.send_recv_message(["VER_GRUPO"])
         if self.has_permission(resp[0]):
             if resp[0] == "GRUPO_DE_STREAMING":
                 print("Usuários do grupo: {}".format(resp[1]))
+                return resp[1]
             else:
                 print("Erro ao buscar grupo")
+                return None
 
-    def remove_from_group(self):
-        chosen_user = input("Digite o nome do usuário: ")
+    def remove_from_group(self, chosen_user):
         resp = self.send_recv_message(["REMOVER_USUARIO_GRUPO", chosen_user])
         if self.has_permission(resp[0]):
             if resp[0] == "REMOVER_USUARIO_GRUPO_ACK":
                 print("Usuário removido do grupo com sucesso!")
+                return True
             else:
                 print("Erro ao remover usuário do grupo")
+                return False
