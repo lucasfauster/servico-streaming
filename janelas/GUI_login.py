@@ -5,7 +5,6 @@ from client.client import Client
 def login():
     name = name_input.get()
     option = option_input.get()
-    print(option)
     user_type = {1: "convidado", 2: "premium"}
     if not name:
         output_label.config(text='Nome não pode ficar em branco!', foreground='red')
@@ -15,7 +14,8 @@ def login():
         window.title('Biting Wire - Seu Programa de Streaming Favorito')
         window.geometry("750x510")
         login_frame.destroy()
-        render_client_gui(window, client)
+        render_client_gui(window, client, user_type.get(option))
+        client.log_out()
 
 
 # #  Janela
