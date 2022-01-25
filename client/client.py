@@ -8,7 +8,7 @@ def main():
     client_tcp = ClientTCP()
 
     client_tcp.address_UDP = client_udp.address
-    
+
     user_name = input("Digite seu nome: ")
     user_type = input("Digite o tipo de usuário ( Premium/Convidado ): ")
     if not client_tcp.log_in(user_name, user_type):
@@ -28,7 +28,7 @@ def main():
         if opt == '1':
             client_udp.list_videos()
         elif opt == '2':
-            client_udp.play_video(user_name = user_name)
+            client_udp.play_video(user_name=user_name)
         elif opt == '3':
             client_tcp.create_group()
         elif opt == '4':
@@ -38,7 +38,7 @@ def main():
         elif opt == '6':
             client_tcp.remove_from_group()
         elif opt == '7':
-            client_udp.play_video(user_name = user_name, option = "GROUP")
+            client_udp.play_video(user_name=user_name, option="GROUP")
         elif opt == '8':
             client_udp.get_in_room()
         elif opt == '0':

@@ -3,7 +3,6 @@ import os
 import pickle
 import socket
 import threading
-import uuid
 
 from user_handler import UserHandler
 

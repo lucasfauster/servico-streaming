@@ -18,8 +18,12 @@ class ClientUDP:
 
     def send_recv_message(self, message):
         self.client_socket.sendto(pickle.dumps(message), self.server_address)
-        resp, _ = self.client_socket.recvfrom(self.BUFF_SIZE)
-        return pickle.loads(resp)
+        while True:
+            try:
+                resp, _ = self.client_socket.recvfrom(self.BUFF_SIZE)
+                return pickle.loads(resp)
+            except pickle.UnpicklingError:
+                pass
 
     def has_video(self, option):
         if option == "SINGLE":
@@ -35,7 +39,7 @@ class ClientUDP:
         except socket.timeout:
             print("NÃO HÁ VIDEO A SER EXIBIDO")
             return False
-    
+
     def select_video_and_resolution(self, option, user_name):
         self.video_name = input("DIGITE O NOME DO VÍDEO: ")
         res_avaliable = ["240p", "480p", "720p"]
@@ -73,11 +77,14 @@ class ClientUDP:
                 cv2.imshow(self.video_name, frame)
                 key = cv2.waitKey(1) & 0xFF  # não tá pegando o comando de parar a reprodução do vídeo
                 if key == ord('q'):
-                    self.client_socket.close()
                     print("VÍDEO FECHADO")
                     break
         except socket.timeout:
             print("VIDEO TERMINOU!")
+        finally:
+            cv2.destroyAllWindows()
+            message = ['CLOSE_STREAMING']
+            self.client_socket.sendto(pickle.dumps(message), self.server_address)
 
     def list_videos(self):
         resposta = self.send_recv_message(['LISTAR_VIDEOS'])
@@ -92,7 +99,7 @@ class ClientUDP:
             video_selected = self.select_video_and_resolution(option, user_name)
             if video_selected and self.has_video("SINGLE"):
                 self.run_video()
-        
+
     def get_in_room(self):
         if self.has_video("GROUP"):
             self.run_video()

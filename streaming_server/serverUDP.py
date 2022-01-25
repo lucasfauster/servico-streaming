@@ -5,6 +5,7 @@ import imutils
 import socket
 import base64
 
+
 class serverUDP:
     def __init__(self):
         self.BUFF_SIZE = 65536
@@ -21,9 +22,11 @@ class serverUDP:
         self.service_host_ip = '127.0.1.1'
         self.service_socket.connect((self.host_ip, self.service_port))
 
-        self.lista_videos = {'1': ['animacao.mp4', '240p'], '2': ['animacao.mp4', '480p'], '3': ['animacao.mp4', '720p'],
-                    '4': ['pacman.mp4', '240p'], '5': ['pacman.mp4', '480p'], '6': ['pacman.mp4', '720p']}
+        self.active_clients = []
 
+        self.lista_videos = {'1': ['animacao.mp4', '240p'], '2': ['animacao.mp4', '480p'],
+                             '3': ['animacao.mp4', '720p'],
+                             '4': ['pacman.mp4', '240p'], '5': ['pacman.mp4', '480p'], '6': ['pacman.mp4', '720p']}
 
     def get_user_type(self, user_name):
         self.service_socket.send(pickle.dumps(["GET_USER_INFORMATION", user_name, "SINGLE"]))
@@ -39,11 +42,18 @@ class serverUDP:
             return resp[1]
         print("ERRO AO BUSCAR INFORMAÇÕES DO GRUPO  DO USUÁRIO")
 
-    def find_video(self, video_name, resolution):
+    @staticmethod
+    def find_video(video_name, resolution):
         # noinspection PyArgumentList
         video = cv2.VideoCapture(f'../videos/{resolution}/{video_name}')
         return video
 
+    def is_client_active(self, addresses):
+        new_addresses = []
+        for address in addresses:
+            if address in self.active_clients:
+                new_addresses.append(address)
+        return new_addresses
 
     def send_video(self, client_addr, video, resolution):
         vid = self.find_video(video, resolution)
@@ -53,8 +63,9 @@ class serverUDP:
             for addr in client_addr:
                 self.server_socket.sendto(message, addr)
             while vid.isOpened():
+                client_addr = self.is_client_active(client_addr)
                 img, frame = vid.read()
-                if not img:
+                if not img or len(client_addr) == 0:
                     print(f'ENVIO DO VÍDEO {video} COM RESOLUÇÃO {resolution} PARA {client_addr} TERMINADO!')
                     break
                 frame = imutils.resize(frame, width=600)
@@ -69,7 +80,6 @@ class serverUDP:
             for addr in client_addr:
                 self.server_socket.sendto(pickle.dumps(msg), addr)
 
-
     def main(self):
         while True:
             msg, address = self.server_socket.recvfrom(self.BUFF_SIZE)
@@ -78,6 +88,8 @@ class serverUDP:
                 if msg[3] == "SINGLE":
                     video = msg[1]
                     resolution = msg[2]
+                    if address not in self.active_clients:
+                        self.active_clients.append(address)
                     thread = threading.Thread(target=self.send_video, args=([address], video, resolution))
                     thread.start()
                 else:
@@ -85,6 +97,9 @@ class serverUDP:
                     addresses = self.get_user_group(user_name)
                     video = msg[1]
                     resolution = msg[2]
+                    for address in addresses:
+                        if address not in self.active_clients:
+                            self.active_clients.append(address)
                     thread = threading.Thread(target=self.send_video, args=(addresses, video, resolution))
                     thread.start()
 
@@ -104,6 +119,8 @@ class serverUDP:
             elif type(msg) is list and msg[0] == 'GET_ADDRESS':
                 msg = pickle.dumps([address])
                 self.server_socket.sendto(msg, address)
+            elif type(msg) is list and msg[0] == "CLOSE_STREAMING":
+                self.active_clients.remove(address)
 
 
 if __name__ == "__main__":
