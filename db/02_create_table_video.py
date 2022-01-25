@@ -19,32 +19,32 @@ print('Tabela criada com sucesso.')
 
 cursor.execute("""
 INSERT INTO video (name, resolution, path)
-VALUES ('Pacman','240p','../videos/240p/pacman.mp4')
+VALUES ('pacman.mp4','240p','../videos/240p/pacman.mp4')
 """)
 
 cursor.execute("""
 INSERT INTO video (name, resolution, path)
-VALUES ('Pacman','480p','../videos/480p/pacman.mp4')
+VALUES ('pacman.mp4','480p','../videos/480p/pacman.mp4')
 """)
 
 cursor.execute("""
 INSERT INTO video (name, resolution, path)
-VALUES ('Pacman','720p','../videos/720p/pacman.mp4')
+VALUES ('pacman.mp4','720p','../videos/720p/pacman.mp4')
 """)
 
 cursor.execute("""
 INSERT INTO video (name, resolution, path)
-VALUES ('Animação','240p','../videos/240p/animacao.mp4')
+VALUES ('animacao.mp4','240p','../videos/240p/animacao.mp4')
 """)
 
 cursor.execute("""
 INSERT INTO video (name, resolution, path)
-VALUES ('Animação','480p','../videos/480p/animacao.mp4')
+VALUES ('animacao.mp4','480p','../videos/480p/animacao.mp4')
 """)
 
 cursor.execute("""
 INSERT INTO video (name, resolution, path)
-VALUES ('Animação','720p','../videos/720p/animacao.mp4')
+VALUES ('animacao.mp4','720p','../videos/720p/animacao.mp4')
 """)
 
 conn.commit()

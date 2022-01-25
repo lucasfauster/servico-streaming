@@ -10,7 +10,19 @@ def create_video_transaction(name, resolution, path):
     conn.close()
 
 
-def read_videos_transaction():
+def read_videos_transaction_to_client():
+    conn = sqlite3.connect('../db/streaming.db')
+    cursor = conn.cursor()
+    cursor.execute("""SELECT name, resolution FROM video;""")
+    videos_tuplas = cursor.fetchall()
+    videos_array = []
+    for video in videos_tuplas:
+        videos_array.append([video[0], video[1]])
+    conn.close()
+    return videos_array
+
+
+def read_videos_transaction_to_server():
     conn = sqlite3.connect('../db/streaming.db')
     cursor = conn.cursor()
     cursor.execute("""SELECT * FROM video;""")
@@ -36,5 +48,3 @@ def delete_video_transaction(id_video):
     conn.commit()
     print('Vídeo removido com sucesso.')
     conn.close()
-
-

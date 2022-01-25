@@ -1,3 +1,4 @@
+import os
 from tkinter import *
 from tkinter import ttk
 from tkinter.ttk import Progressbar
@@ -99,7 +100,7 @@ def save_video(name_input, option, path_input, output_label, window, add_video_b
     name = name_input.get()
     resolution = option.get()
     path = path_input.get()
-    final_path = f'../videos/{resolution}/{name}.mp4'
+    final_path = f'../videos/{resolution}/{name}'
     copyfile(path, final_path)
 
     if validates(name, resolution, path, output_label):
@@ -124,7 +125,7 @@ def save_video(name_input, option, path_input, output_label, window, add_video_b
 
 def list_videos():
     count = 0
-    videos = read_videos_transaction()
+    videos = read_videos_transaction_to_server()
     for video in videos:
         if count % 2 == 0:
             table_view.insert(parent='', index='end', iid=count, text="",
@@ -143,6 +144,7 @@ def update_video():
     selected = table_view.focus()
     if selected:
         id_video, name, resolution, path = table_view.item(selected, 'value')
+        os.remove(f'../videos/{resolution}/{name}')
         show_video_window(janela, "UPDATE", id_video, name, resolution, path)
     else:
         print("Nenhum vídeo selecionado")
@@ -151,7 +153,8 @@ def update_video():
 def delete_video():
     selected = table_view.focus()
     if selected:
-        id_video = table_view.item(selected, 'value')[0]
+        id_video, name, resolution, path = table_view.item(selected, 'value')
+        os.remove(f'../videos/{resolution}/{name}')
         delete_video_transaction(id_video)
         refresh_list_videos()
     else:
@@ -184,8 +187,6 @@ def video_stream(name, resolution, path):
             video_cap.release()
             cv2.destroyWindow('Frame')
             break
-
-
 
 
 def play_video():
