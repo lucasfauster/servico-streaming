@@ -1,5 +1,6 @@
 from tkinter import *
 from tkinter import ttk
+
 from PIL import Image, ImageTk
 
 
@@ -31,42 +32,47 @@ def wait_for_video(output_label, client, invited_group_table_view):
     output_label.config(text='')
     client.get_in_group_room()
     output_label.config(text='Vídeo terminado!', foreground='green')
-    group = client.get_group()
-    refresh_list_group(group, invited_group_table_view)
+    if client.is_premium():
+        group = client.get_group()
+        refresh_list_group(group, invited_group_table_view)
 
 
-def check_group(check_group_button, output_label, client, main_frame, menu_frame, create_group_button=None, play_video_button=None):
+def check_group(check_group_button, output_label, client, main_frame, menu_frame, create_group_button=None,
+                play_video_button=None):
     output_label.config(text='')
+    invited_group_table_view = None
     if client.has_group():
         output_label.config(text='Você foi incluído(a) em um grupo!', foreground='green')
-        if play_video_button: play_video_button.destroy()
-        if create_group_button: create_group_button.destroy()
+        if play_video_button:
+            play_video_button.destroy()
+        if create_group_button:
+            create_group_button.destroy()
         check_group_button.pack_forget()
+        if client.is_premium():
+            invited_group_table_frame = Frame(main_frame)
+            invited_group_table_frame.pack(side=LEFT, padx=50, pady=10)
+            invited_group_table_frame.configure(background='white')
+            invited_group_table_scroll = Scrollbar(invited_group_table_frame)
+            invited_group_table_scroll.pack(side=RIGHT, fill=Y)
+            invited_group_table_view = ttk.Treeview(invited_group_table_frame,
+                                                    yscrollcommand=invited_group_table_scroll.set, selectmode="browse")
+            invited_group_table_view.pack()
+            invited_group_table_scroll.config(command=invited_group_table_view.yview)
+            invited_group_table_view['columns'] = "Grupo"
+            invited_group_table_view.column("#0", width=0, stretch=NO)
+            invited_group_table_view.column("Grupo", anchor=W, width=140)
+            invited_group_table_view.heading("#0", text="", anchor=CENTER)
+            invited_group_table_view.heading("Grupo", text="Grupo", anchor=CENTER)
+            invited_group_table_view.tag_configure('oddrow', background="white")
+            invited_group_table_view.tag_configure('evenrow', background="orange")
 
-        invited_group_table_frame = Frame(main_frame)
-        invited_group_table_frame.pack(side=LEFT, padx=50, pady=10)
-        invited_group_table_frame.configure(background='white')
-        invited_group_table_scroll = Scrollbar(invited_group_table_frame)
-        invited_group_table_scroll.pack(side=RIGHT, fill=Y)
-        invited_group_table_view = ttk.Treeview(invited_group_table_frame, yscrollcommand=invited_group_table_scroll.set, selectmode="browse")
-        invited_group_table_view.pack()
-        invited_group_table_scroll.config(command=invited_group_table_view.yview)
-        invited_group_table_view['columns'] = "Grupo"
-        invited_group_table_view.column("#0", width=0, stretch=NO)
-        invited_group_table_view.column("Grupo", anchor=W, width=140)
-        invited_group_table_view.heading("#0", text="", anchor=CENTER)
-        invited_group_table_view.heading("Grupo", text="Grupo", anchor=CENTER)
-        invited_group_table_view.tag_configure('oddrow', background="white")
-        invited_group_table_view.tag_configure('evenrow', background="orange")
-
-        group = client.get_group()
-        refresh_list_group(group, invited_group_table_view)
+            group = client.get_group()
+            refresh_list_group(group, invited_group_table_view)
 
         wait_for_video_button = Button(menu_frame, text="Aguardar video", width=12, height=2, bg="orange",
-                                       command=lambda: wait_for_video(output_label, client, invited_group_table_view))
+                                       command=lambda: wait_for_video(output_label, client,
+                                                                                invited_group_table_view))
         wait_for_video_button.pack(side=LEFT, padx=10)
-        group = client.get_group()
-        refresh_list_group(group, invited_group_table_view)
     else:
         output_label.config(text='Você ainda não foi incluído(a) em nenhum grupo', foreground='red')
 
@@ -83,7 +89,8 @@ def add_user(window, group_table_view, output_label, client):
     name_input = Entry(main, width=20)
     name_input.pack()
     add_user_button = Button(main, text="Adicionar", width=12, height=2,
-                             command=lambda: add_user_to_group(main, group_table_view, name_input, output_label, client), bg="orange")
+                             command=lambda: add_user_to_group(main, group_table_view, name_input, output_label,
+                                                               client), bg="orange")
     add_user_button.pack(padx=10)
 
 
@@ -181,7 +188,8 @@ def list_videos(videos, table_view):
     count = 0
     for video in videos:
         if count % 2 == 0:
-            table_view.insert(parent='', index='end', iid=count, text="", values=(video[0], video[1]), tags=('evenrow',))
+            table_view.insert(parent='', index='end', iid=count, text="", values=(video[0], video[1]),
+                              tags=('evenrow',))
         else:
             table_view.insert(parent='', index='end', iid=count, text="", values=(video[0], video[1]), tags=('oddrow',))
         count += 1
@@ -232,7 +240,7 @@ def render_client_gui(window, client, client_type):
     menu_frame = Frame(window)
     menu_frame.pack()
     menu_frame.configure(background='white')
-    if client_type == "premium":
+    if client.is_premium():
         play_button = Button(menu_frame, text="Reproduzir Vídeo", width=12, height=2, bg="orange",
                              command=lambda: play_video(table_view, output_label, client))
         play_button.pack(side=LEFT, padx=10)
@@ -243,10 +251,12 @@ def render_client_gui(window, client, client_type):
         create_group_button.pack(side=LEFT, padx=10)
 
         check_group_button = Button(menu_frame, text="Checar grupos", width=12, height=2, bg="orange",
-                                    command=lambda: check_group(check_group_button, output_label, client, main_frame, menu_frame, create_group_button, play_button))
+                                    command=lambda: check_group(check_group_button, output_label, client, main_frame,
+                                                                menu_frame, create_group_button, play_button))
     else:
         check_group_button = Button(menu_frame, text="Checar grupos", width=12, height=2, bg="orange",
-                                    command=lambda: check_group(check_group_button, output_label, client, main_frame, menu_frame))
+                                    command=lambda: check_group(check_group_button, output_label, client, main_frame,
+                                                                menu_frame))
     check_group_button.pack(side=LEFT, padx=10)
 
     videos = client.list_videos()

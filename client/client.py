@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from client.clientUDP import ClientUDP
 from client.clientTCP import ClientTCP
 
@@ -43,10 +45,11 @@ class Client:
         return self.client_udp.get_in_group_room()
 
     def has_group(self):
-        group = self.client_tcp.get_group()
-        if isinstance(group, list):
-            return len(group) > 1
-        return False
+        user = self.client_tcp.get_user_info()
+        return isinstance(user['Grupo'], UUID)
+
+    def is_premium(self):
+        return self.user_type == "premium"
 
     def log_out(self):
         self.client_tcp.log_out()

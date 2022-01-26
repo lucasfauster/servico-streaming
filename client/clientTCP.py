@@ -28,7 +28,6 @@ class ClientTCP:
         if resp[0] == "ENTRAR_NA_APP_ACK":
             print("Você entrou no app")
             return True
-
         print("Ocorreu um erro ao entrar no app")
         return False
 
@@ -36,8 +35,8 @@ class ClientTCP:
         print("TCHAU!")
         self.send_recv_message(["SAIR_DA_APP"])
 
-    def get_user_info(self, name, user_type):
-        resp = self.send_recv_message(["ENTRAR_NA_APP", [name, user_type]])
+    def get_user_info(self):
+        resp = self.send_recv_message(["ENTRAR_NA_APP"])
         if resp[0] == "STATUS_DO_USUARIO":
             return resp[1]
         return None
