@@ -28,6 +28,8 @@ class ClientUDP:
     def has_video(self, option):
         if option == "SINGLE":
             self.client_socket.settimeout(10)
+        else:
+            self.client_socket.settimeout(None)
         try:
             msg, _ = self.client_socket.recvfrom(self.BUFF_SIZE)
             message = pickle.loads(msg)

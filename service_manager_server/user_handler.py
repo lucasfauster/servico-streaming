@@ -25,7 +25,7 @@ class UserHandler:
         user = self.user_manager.get_user_from_address(address)
         if not user.user_type.lower() == 'premium':
             self.log.info(
-                "method=handle_create_group, message=create group is exclusive for premium users".format(address))
+                "method=is_premium_user, message=this action is exclusive for premium users".format(address))
             user_socket.send(pickle.dumps(["PERMISSAO_NEGADA"]))
             return False
         return True
