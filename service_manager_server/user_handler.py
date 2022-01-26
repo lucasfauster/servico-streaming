@@ -93,13 +93,12 @@ class UserHandler:
                 user_socket.send(pickle.dumps(["REMOVER_USUARIO_GRUPO_ERR"]))
 
     def handle_get_group(self, user_socket, address, message=None):
-        if self.is_premium_user(address, user_socket):
-            user = self.user_manager.get_user_from_address(address)
-            self.log.info(f"method=handle_get_group, message=getting group for user {user.get_user_info()}")
-            users = self.user_manager.get_users_from_group(group=user.group)
-            users_names = [user.name for user in users]
-            self.log.info(f"method=handle_get_group, message=sending user list {users_names} to user")
-            user_socket.send(pickle.dumps(["GRUPO_DE_STREAMING", users_names]))
+        user = self.user_manager.get_user_from_address(address)
+        self.log.info(f"method=handle_get_group, message=getting group for user {user.get_user_info()}")
+        users = self.user_manager.get_users_from_group(group=user.group)
+        users_names = [user.name for user in users]
+        self.log.info(f"method=handle_get_group, message=sending user list {users_names} to user")
+        user_socket.send(pickle.dumps(["GRUPO_DE_STREAMING", users_names]))
 
     def handle_default(self, message, user_socket, address=None):
         user_socket.send(pickle.dumps(["OPÇÃO INVÁLIDA"]))

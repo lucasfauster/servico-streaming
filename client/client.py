@@ -44,7 +44,9 @@ class Client:
 
     def has_group(self):
         group = self.client_tcp.get_group()
-        return len(group) > 1
+        if isinstance(group, list):
+            return len(group) > 1
+        return False
 
     def log_out(self):
         self.client_tcp.log_out()

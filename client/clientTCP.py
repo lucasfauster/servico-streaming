@@ -62,13 +62,12 @@ class ClientTCP:
 
     def get_group(self):
         resp = self.send_recv_message(["VER_GRUPO"])
-        if self.has_permission(resp[0]):
-            if resp[0] == "GRUPO_DE_STREAMING":
-                print("Usuários do grupo: {}".format(resp[1]))
-                return resp[1]
-            else:
-                print("Erro ao buscar grupo")
-                return None
+        if resp[0] == "GRUPO_DE_STREAMING":
+            print("Usuários do grupo: {}".format(resp[1]))
+            return resp[1]
+        else:
+            print("Erro ao buscar grupo {}".format(resp[1]))
+            return None
 
     def remove_from_group(self, chosen_user):
         resp = self.send_recv_message(["REMOVER_USUARIO_GRUPO", chosen_user])
