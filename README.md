@@ -1,20 +1,26 @@
-Para executar:
-Iniciar o servidor executando o arquivo: streaming_server/serverUDP.py
-    Servidor aguardando clientes
-Iniciar cliente(s) executando o arquivo: clientUDP.py
-    Escolher as opções:
-        1) LISTAR VÍDEOS DISPONÍVEIS
-        2) REPRODUZIR UM VÍDEO
-            Informar o vídeo e resolução desejados
-    Para sair do vídeo:
-        Digitar "q"
-
 - Bibliotecas Necessárias:
     - OpenCV (cv2)
     - imutils
     - pickle
     - numpy
+    - tkinder
+    - pillow
  - Bibliotecas Nativas do Python:
     - Socket
     - Threading
     - Base64
+
+Para executar a aplicação (usuário):
+1. Inicie o servidor gerenciado de serviço através do seguinte comando:
+> python3 service_manager_server/main.py 
+
+2. Inicie o servidor de streaming através do seguinte comando:
+> python3 streaming_server/serverUDP.py 
+
+3. Inicie a GUI do cliente através do seguinte comando: 
+> python3 janelas/GUI_login.py 
+
+
+Para executar a aplicação (administrador):
+1. Inicie a GUI do servidor através do seguinte comando: 
+> python3 janelas/GUI_server.py 
