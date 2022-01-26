@@ -191,8 +191,11 @@ def video_stream(name, resolution, path):
 
 def play_video():
     selected = table_view.focus()
-    id_video, name, resolution, path = table_view.item(selected, 'value')
-    video_stream(name, resolution, path)
+    if selected:
+        id_video, name, resolution, path = table_view.item(selected, 'value')
+        video_stream(name, resolution, path)
+    else:
+        print("Nenhum vídeo selecionado")
 
 
 def clicker(e):

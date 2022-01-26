@@ -35,12 +35,12 @@ def wait_for_video(output_label, client, invited_group_table_view):
     refresh_list_group(group, invited_group_table_view)
 
 
-def check_group(check_group_button, create_group_button, play_video_button, output_label, client, main_frame, menu_frame):
+def check_group(check_group_button, output_label, client, main_frame, menu_frame, create_group_button=None, play_video_button=None):
     output_label.config(text='')
     if client.has_group():
         output_label.config(text='Você foi incluído(a) em um grupo!', foreground='green')
-        play_video_button.destroy()
-        create_group_button.destroy()
+        if play_video_button: play_video_button.destroy()
+        if create_group_button: create_group_button.destroy()
         check_group_button.pack_forget()
 
         invited_group_table_frame = Frame(main_frame)
@@ -63,8 +63,7 @@ def check_group(check_group_button, create_group_button, play_video_button, outp
         refresh_list_group(group, invited_group_table_view)
 
         wait_for_video_button = Button(menu_frame, text="Aguardar video", width=12, height=2, bg="orange",
-                                       command=lambda: wait_for_video(output_label, client, invited_group_table_view,
-                                                                      wait_for_video_button))
+                                       command=lambda: wait_for_video(output_label, client, invited_group_table_view))
         wait_for_video_button.pack(side=LEFT, padx=10)
         group = client.get_group()
         refresh_list_group(group, invited_group_table_view)
@@ -243,9 +242,11 @@ def render_client_gui(window, client, client_type):
                                                                   output_label, client))
         create_group_button.pack(side=LEFT, padx=10)
 
-    check_group_button = Button(menu_frame, text="Checar grupos", width=12, height=2, bg="orange",
-                                command=lambda: check_group(check_group_button, create_group_button, play_button,
-                                                            output_label, client, main_frame, menu_frame))
+        check_group_button = Button(menu_frame, text="Checar grupos", width=12, height=2, bg="orange",
+                                    command=lambda: check_group(check_group_button, output_label, client, main_frame, menu_frame, create_group_button, play_button))
+    else:
+        check_group_button = Button(menu_frame, text="Checar grupos", width=12, height=2, bg="orange",
+                                    command=lambda: check_group(check_group_button, output_label, client, main_frame, menu_frame))
     check_group_button.pack(side=LEFT, padx=10)
 
     videos = client.list_videos()
