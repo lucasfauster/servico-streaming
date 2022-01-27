@@ -1,12 +1,8 @@
 import pickle
-import struct
-
 import cv2
 import socket
 import numpy as np
 import base64
-
-import pyaudio
 
 
 class ClientUDP:
@@ -14,20 +10,11 @@ class ClientUDP:
         self.BUFF_SIZE = 65536
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.BUFF_SIZE)
-        self.client_socket.bind(('127.0.1.1', 0))
-
-        self.port = self.client_socket.getsockname()[1]
-
-        self.audio_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.audio_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.BUFF_SIZE)
-        self.audio_socket.bind(('127.0.1.1', self.port+1))
-
         self.host_ip = '127.0.1.1'
         self.port = 5050
         self.video_name = ""
         self.server_address = (self.host_ip, self.port)
-
-        self.break_video = False
+        self.address = self.get_address()
 
     def send_recv_message(self, message):
         self.client_socket.sendto(pickle.dumps(message), self.server_address)
@@ -78,7 +65,6 @@ class ClientUDP:
 
     def run_video(self):
         self.client_socket.settimeout(1)
-        self.break_video = False
         try:
             while True:
                 packet, _ = self.client_socket.recvfrom(self.BUFF_SIZE)
@@ -90,9 +76,7 @@ class ClientUDP:
                 key = cv2.waitKey(1) & 0xFF  # não tá pegando o comando de parar a reprodução do vídeo
                 if key == ord('q'):
                     print("VÍDEO FECHADO")
-                    self.break_video = True
                     break
-
         except socket.timeout:
             print("VIDEO TERMINOU!")
         finally:
@@ -109,32 +93,11 @@ class ClientUDP:
         if has_permission:
             video_selected = self.select_video_and_resolution(video_name, resolution, user_name, option)
             if video_selected and self.has_video("SINGLE"):
-                from concurrent.futures import ThreadPoolExecutor
-                with ThreadPoolExecutor(max_workers=2) as executor:
-                    executor.submit(self.audio_stream)
-                    executor.submit(self.run_video)
+                self.run_video()
 
     def get_in_group_room(self):
         if self.has_video("GROUP"):
-            from concurrent.futures import ThreadPoolExecutor
-            with ThreadPoolExecutor(max_workers=2) as executor:
-                executor.submit(self.audio_stream)
-                executor.submit(self.run_video)
+            self.run_video()
 
-    def audio_stream(self):
-        p = pyaudio.PyAudio()
-        _CHUNK = 1024
-        stream = p.open(format=p.get_format_from_width(2),
-                        channels=2,
-                        rate=44100,
-                        output=True,
-                        frames_per_buffer=_CHUNK)
-        self.audio_socket.settimeout(1)
-        while not self.break_video:
-            try:
-                frame, _ = self.audio_socket.recvfrom(self.BUFF_SIZE)
-                stream.write(frame)
-            except Exception as e:
-                print(f"ERRO: {str(e)}")
-                break
-        self.break_video = False
+    def get_address(self):
+        return self.send_recv_message(['GET_ADDRESS'])[0]

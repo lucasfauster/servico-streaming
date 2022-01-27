@@ -12,7 +12,8 @@ class Client:
         self.client_udp = ClientUDP()
 
         self.client_tcp = ClientTCP()
-        self.client_tcp.address_UDP = self.client_udp.client_socket.getsockname()
+
+        self.client_tcp.address_UDP = self.client_udp.address
 
     def login(self, user_name, user_type):
         self.user_name = user_name

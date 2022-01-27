@@ -1,18 +1,12 @@
-import base64
-import os
 import pickle
-import queue
-import socket
 import threading
-import wave
-
 import cv2
 import imutils
-
+import socket
+import base64
 from db.video_transactions import *
 
-
-class StreamingService:
+class serverUDP:
     def __init__(self):
         self.BUFF_SIZE = 65536
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -48,85 +42,41 @@ class StreamingService:
 
     @staticmethod
     def find_video(video_name, resolution):
-        video_path = f'../videos/{resolution}/{video_name}'
         # noinspection PyArgumentList
-        video = cv2.VideoCapture(video_path)
+        video = cv2.VideoCapture(f'../videos/{resolution}/{video_name}')
         return video
 
-    def are_clients_active(self, addresses):
+    def is_client_active(self, addresses):
         new_addresses = []
         for address in addresses:
             if address in self.active_clients:
                 new_addresses.append(address)
         return new_addresses
 
-    def send_video_and_audio(self, client_addr, video, resolution):
-
-        video_queue = queue.Queue(maxsize=10)
-
+    def send_video(self, client_addr, video, resolution):
         vid = self.find_video(video, resolution)
-        FPS = vid.get(cv2.CAP_PROP_FPS)
-        TS = (0.5 / FPS)
-        totalNoFrames = int(vid.get(cv2.CAP_PROP_FRAME_COUNT))
-        durationInSeconds = float(totalNoFrames) / float(FPS)
-        d = vid.get(cv2.CAP_PROP_POS_MSEC)
-
-        from concurrent.futures import ThreadPoolExecutor
-        with ThreadPoolExecutor(max_workers=3) as executor:
-            executor.submit(self.audio_stream, client_addr, video, resolution)
-            executor.submit(self.gen_video_stream, vid, video_queue)
-            executor.submit(self.send_video, client_addr, video_queue)
-
-    def audio_stream(self, client_addr, video_name, resolution):
-        CHUNK = 1024
-        try:
-            try:
-                wf = wave.open(f'../audios/{resolution}-{video_name.split(".")[0]}.wav', 'rb')
-            except FileNotFoundError as e:
-                command = "ffmpeg -i {} -ab 160k -ac 2 -ar 44100 -vn {}".format(f'../videos/{resolution}/{video_name}',
-                                                                                f'../audios/{resolution}-{video_name.split(".")[0]}.wav')
-                os.system(command)
-                wf = wave.open(f'../audios/{resolution}-{video_name.split(".")[0]}.wav', 'rb')
-            while len(client_addr) != 0:
-                data = wf.readframes(CHUNK)
-                for addr in client_addr:
-                    host, port = addr
-                    self.server_socket.sendto(data, (host, port + 1))
-                client_addr = self.are_clients_active(client_addr)
-        except Exception as e:
-            print("Error in audio_stream: " + str(e))
-            for addr in client_addr:
-                host, port = addr
-                self.server_socket.sendto(pickle.dumps(["ERRO_PARSING_AUDIO"]), (host, port + 1))
-                return
-
-    def gen_video_stream(self, vid, video_queue):
-        WIDTH = 400
-        while vid.isOpened():
-            try:
-                _, frame = vid.read()
-                frame = imutils.resize(frame, width=WIDTH)
-                video_queue.put(frame)
-            except Exception as e:
-                print(f"Error: {str(e)}")
-                return
-        print('Player closed')
-        vid.release()
-
-    def send_video(self, client_addr, video_queue):
-        message = pickle.dumps(["REPRODUZINDO"])
-        for addr in client_addr:
-            self.server_socket.sendto(message, addr)
-        while True:
-            frame = video_queue.get()
-            encoded, buffer = cv2.imencode('.jpeg', frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
-            message = base64.b64encode(buffer)
-            client_addr = self.are_clients_active(client_addr)
-            if frame is None or len(client_addr) == 0:
-                print(f'ENVIO DO VÍDEO TERMINADO!')
-                break
+        if vid.isOpened():
+            print(f"ENVIANDO VÍDEO {video} COM RESOLUÇÃO {resolution} PARA {client_addr}")
+            message = pickle.dumps(["REPRODUZINDO"])
             for addr in client_addr:
                 self.server_socket.sendto(message, addr)
+            while vid.isOpened():
+                client_addr = self.is_client_active(client_addr)
+                img, frame = vid.read()
+                if not img or len(client_addr) == 0:
+                    print(f'ENVIO DO VÍDEO {video} COM RESOLUÇÃO {resolution} PARA {client_addr} TERMINADO!')
+                    break
+                frame = imutils.resize(frame, width=600)
+                encoded, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 50])
+                message = base64.b64encode(buffer)
+                for addr in client_addr:
+                    self.server_socket.sendto(message, addr)
+            vid.release()
+        else:
+            msg = f"VIDEO {video} NÃO ENCONTRADO PARA RESOLUÇÃO {resolution}."
+            print(msg)
+            for addr in client_addr:
+                self.server_socket.sendto(pickle.dumps(msg), addr)
 
     def main(self):
         while True:
@@ -138,7 +88,7 @@ class StreamingService:
                     resolution = msg[2]
                     if address not in self.active_clients:
                         self.active_clients.append(address)
-                    thread = threading.Thread(target=self.send_video_and_audio, args=([address], video, resolution))
+                    thread = threading.Thread(target=self.send_video, args=([address], video, resolution))
                     thread.start()
                 else:
                     user_name = msg[4]
@@ -148,7 +98,7 @@ class StreamingService:
                     for address in addresses:
                         if address not in self.active_clients:
                             self.active_clients.append(address)
-                    thread = threading.Thread(target=self.send_video_and_audio, args=(addresses, video, resolution))
+                    thread = threading.Thread(target=self.send_video, args=(addresses, video, resolution))
                     thread.start()
 
             elif type(msg) is list and msg[0] == 'LISTAR_VIDEOS':
@@ -172,4 +122,4 @@ class StreamingService:
 
 
 if __name__ == "__main__":
-    StreamingService().main()
+    serverUDP().main()
