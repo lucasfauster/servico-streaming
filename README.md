@@ -11,6 +11,7 @@
     - Socket
     - Threading
     - Base64
+    - sqlite3
 
 Para executar a aplicação (usuário):
 1. Inicie o servidor gerenciado de serviço através do seguinte comando:
