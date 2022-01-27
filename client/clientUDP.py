@@ -72,8 +72,8 @@ class ClientUDP:
                 data = base64.b64decode(packet)
                 npdata = np.fromstring(data, dtype=np.uint8)
                 frame = cv2.imdecode(npdata, 1)
-                cv2.imshow(self.video_name, frame)
-                key = cv2.waitKey(1) & 0xFF  # não tá pegando o comando de parar a reprodução do vídeo
+                cv2.imshow("", frame)
+                key = cv2.waitKey(50) & 0xFF
                 if key == ord('q'):
                     print("VÍDEO FECHADO")
                     break

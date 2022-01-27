@@ -67,7 +67,7 @@ class serverUDP:
                     print(f'ENVIO DO VÍDEO {video} COM RESOLUÇÃO {resolution} PARA {client_addr} TERMINADO!')
                     break
                 frame = imutils.resize(frame, width=600)
-                encoded, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 50])
+                encoded, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 60])
                 message = base64.b64encode(buffer)
                 for addr in client_addr:
                     self.server_socket.sendto(message, addr)
