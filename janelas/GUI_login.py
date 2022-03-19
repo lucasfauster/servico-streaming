@@ -10,6 +10,7 @@ class LoginGUI:
 
     def __init__(self):
         self.client = Client()
+        self.client_gui = None
         self.window = Tk()
 
         self.login_frame = Frame(self.window)
@@ -79,7 +80,8 @@ class LoginGUI:
             self.window.title('Biting Wire - Seu Programa de Streaming Favorito')
             self.window.geometry("750x510")
             self.login_frame.destroy()
-            render_client_gui(self.window, self.client, self.USER_TYPE.get(option))
+            self.client_gui = ClientGUI(self.window, self.client)
+            self.client_gui.render()
             self.client.log_out()
 
     def render(self):
