@@ -15,7 +15,7 @@ class LoginGUI:
         self.login_frame = Frame(self.window)
         self.logo = Frame(self.login_frame)
         self.img = ImageTk.PhotoImage(Image.open(self.LOGO).resize((214, 120)))
-        self.logo_panel = Label(self.logo, image=self.img)
+        self.logo_label = Label(self.logo, image=self.img)
 
         self.name_frame = Frame(self.login_frame)
         self.name_label = Label(self.name_frame, text="Nome")
@@ -23,8 +23,10 @@ class LoginGUI:
 
         self.type_frame = Frame(self.login_frame)
         self.option_input = IntVar()
-        self.radio_button1 = Radiobutton(self.type_frame, text="Convidado", variable=self.option_input, value=1, selectcolor='#dedede')
-        self.radio_button2 = Radiobutton(self.type_frame, text="Premium", variable=self.option_input, value=2, selectcolor='#dedede')
+        self.radio_button1 = Radiobutton(self.type_frame, text="Convidado", variable=self.option_input,
+                                         value=1, selectcolor='#dedede')
+        self.radio_button2 = Radiobutton(self.type_frame, text="Premium", variable=self.option_input,
+                                         value=2, selectcolor='#dedede')
 
         self.menu_frame = Frame(self.login_frame)
         self.output_label = Label(self.menu_frame, text="")
@@ -40,8 +42,8 @@ class LoginGUI:
 
         self.logo.pack(ipadx=200, pady=(50, 0))
         self.logo.configure(background='white')
-        self.logo_panel.pack()
-        self.logo_panel.configure(background='white')
+        self.logo_label.pack()
+        self.logo_label.configure(background='white')
 
         self.name_frame.pack(pady=30)
         self.name_frame.configure(background='white')
