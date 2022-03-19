@@ -1,12 +1,12 @@
 ### Aplicação de serviço de streaming em python para o trabalho de redes 2
 
 - Bibliotecas Necessárias:
-    - OpenCV (cv2)
-    - imutils
-    - pickle
-    - numpy
-    - tkinder
-    - pillow
+    - opencv-contrib-python v.4.5.4.60
+    - imutils 0.5.4
+    - pickle 
+    - numpy 1.19.5
+    - tkinter 8.6 (sudo apt-get install python3.6-tk)
+    - pillow 8.4.0
  - Bibliotecas Nativas do Python:
     - Socket
     - Threading
