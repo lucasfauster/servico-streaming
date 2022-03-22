@@ -1,14 +1,8 @@
-from tkinter import *
-from tkinter import ttk
-from db.video_transactions import *
-from tkinter.filedialog import askopenfile
-from shutil import copyfile
-from tkinter.ttk import Progressbar
+from GUI_video import *
 from PIL import Image, ImageTk
 import cv2
 import imutils
 import os
-import time
 
 
 class ServerGUI:
@@ -40,16 +34,6 @@ class ServerGUI:
         self.remove_video_button = Button(self.menu_frame, text="Remover Vídeo", width=12, height=2,
                                           command=self.delete_video, bg="orange")
 
-        # ------------------
-        self.transaction = self.add_video_window = None
-        self.id_video = self.name = self.resolution = self.path = None
-        self.name_label = self.name_input = None
-        self.resolution_label = self.option = self.resolution_input = None
-        self.file_label = self.path_input = None
-        self.choose_file_button = self.output_label = None
-        self.add_or_edit_video_button = None
-        self.progress_bar = self.bar_style = None
-
     def configure(self):
         self.window.title('Biting Wire - Seu Programa de Streaming Favorito')
         self.window.configure(background='white')
@@ -58,7 +42,6 @@ class ServerGUI:
         self.logo.pack(padx=(0, 70), pady=5)
         self.logo_panel.pack()
         self.logo_panel.configure(background='white')
-
 
         self.style.theme_use("default")
         self.style.configure("Treeview", background="#D3D3D3", foreground="black", 
@@ -155,135 +138,20 @@ class ServerGUI:
             print("Nenhum vídeo selecionado")
 
     def add_video(self):
-        self.initialize_add_video_window("CREATE")
+        add_video_gui = AddVideoGUI(self.window, "CREATE")
+        add_video_gui.render()
+        self.refresh_list_videos()
 
     def update_video(self):
         selected = self.table_view.focus()
         if selected:
             id_video, name, resolution, path = self.table_view.item(selected, 'value')
-            self.initialize_add_video_window("UPDATE", id_video, name, resolution, path)
-            # To do if path different, delete old file
+            os.remove(f'../videos/{resolution}/{name}')
+            add_video_gui = AddVideoGUI(self.window, "UPDATE", id_video, name, resolution, path)
+            add_video_gui.render()
+            self.refresh_list_videos()
         else:
             print("Nenhum vídeo selecionado")
-
-    def initialize_add_video_window(self, transaction, id_video="", name="", resolution="", path=""):
-        self.transaction = transaction
-        self.add_video_window = Toplevel(self.window)
-
-        self.id_video = id_video
-        self.name = name
-        self.resolution = resolution
-        self.path = path
-
-        self.name_label = Label(self.add_video_window, text="Nome do Vídeo: ")
-        self.name_input = Entry(self.add_video_window, width=30)
-
-        self.resolution_label = Label(self.add_video_window, text="Resolução: ")
-        self.option = StringVar(self.add_video_window)
-        self.resolution_input = OptionMenu(self.add_video_window, self.option, "240p", "480p", "720p")
-        self.resolution_input.grid(sticky="W", row=1, column=1, pady=10, padx=10)
-
-        self.file_label = Label(self.add_video_window, text="Arquivo: ")
-        self.path_input = Entry(self.add_video_window, width=30)
-
-        self.choose_file_button = Button(self.add_video_window, text='Escolher Arquivo',
-                                         command=lambda: self.choose_file())
-        self.output_label = Label(self.add_video_window, text="")
-
-        self.add_or_edit_video_button = None
-
-        self.progress_bar = Progressbar(self.add_video_window, orient=HORIZONTAL, length=300, mode='determinate',
-                                        style='TProgressbar')
-        self.bar_style = ttk.Style()
-        self.configure_add_video_window()
-
-    def configure_add_video_window(self):
-        self.add_video_window.title('Adicionar Vídeo')
-        self.add_video_window.geometry('400x220')
-        self.add_video_window.configure(background='#b3b3b3')
-
-        self.name_label.grid(row=0, column=0, pady=10, padx=10)
-        self.name_label.configure(background='#b3b3b3')
-        self.name_input.grid(row=0, column=1, columnspan=2, pady=10, padx=10)
-        if self.transaction == "UPDATE":
-            self.name_input.insert(0, self.name)
-
-        self.resolution_label.grid(sticky="E", row=1, column=0, pady=10, padx=10)
-        self.resolution_label.configure(background='#b3b3b3')
-        self.resolution_input.grid(sticky="W", row=1, column=1, pady=10, padx=10)
-        if self.transaction == "CREATE":
-            self.option.set("240p")
-        elif self.transaction == "UPDATE":
-            self.option.set(self.resolution)
-
-        self.file_label.grid(sticky="E", row=2, column=0, pady=10, padx=10)
-        self.file_label.configure(background='#b3b3b3')
-        self.path_input.grid(row=2, column=1, columnspan=2, pady=10, padx=10)
-        if self.transaction == "CREATE":
-            self.path_input.insert(0, ' Nenhum arquivo selecionado')
-        elif self.transaction == "UPDATE":
-            self.path_input.insert(0, self.path)
-        self.path_input.configure(state=DISABLED)
-
-        self.choose_file_button.grid(row=1, column=2)
-        self.output_label.grid(row=4, columnspan=3, pady=10)
-        self.output_label.configure(background='#b3b3b3')
-
-        if self.transaction == "CREATE":
-            button_text = 'Adicionar Vídeo'
-            self.add_or_edit_video_button = Button(self.add_video_window, text=button_text, command=lambda: self.save_video())
-        elif self.transaction == "UPDATE":
-            button_text = 'Atualizar Vídeo'
-            self.add_or_edit_video_button = Button(self.add_video_window, text=button_text, command=lambda: self.save_video())
-        self.add_or_edit_video_button.grid(row=3, column=1, pady=5)
-        self.bar_style.configure("TProgressbar", troughcolor='gray', background='green')
-
-    def choose_file(self):
-        path_file = askopenfile(mode='r', filetypes=[('Vídeos', '*mp4')])
-        path_file = path_file.name
-        if path_file:
-            self.path_input.configure(state=NORMAL)
-            self.path_input.delete(0, END)
-            self.path_input.insert(0, path_file)
-            self.path_input.configure(state=DISABLED)
-
-    def validates(self):
-        if self.name and self.resolution and self.path and self.path != ' Nenhum arquivo selecionado':
-            return True
-        elif not self.name:
-            self.output_label.config(text='Nome não pode ficar em branco!', foreground='red')
-        elif self.path == ' Nenhum arquivo selecionado' or not self.path:
-            self.output_label.config(text='Arquivo não pode ficar em branco!', foreground='red')
-        elif not self.resolution:
-            self.output_label.config(text='Resolução não pode ficar em branco!', foreground='red')
-        else:
-            self.output_label.config(text='Erro ao adicionar vídeo!', foreground='red')
-        return False
-
-    def save_video(self):
-        self.name = self.name_input.get()
-        self.resolution = self.option.get()
-        self.path = self.path_input.get()
-        final_path = f'../videos/{self.resolution}/{self.name}'
-        copyfile(self.path, final_path)
-
-        if self.validates():
-            self.progress_bar.grid(row=4, columnspan=3, pady=20)
-            for i in range(5):
-                self.add_video_window.update_idletasks()
-                self.progress_bar['value'] += 20
-                time.sleep(0.2)
-            self.progress_bar.destroy()
-            if self.transaction == "CREATE":
-                create_video_transaction(self.name, self.resolution, final_path)  # Chamada SQL
-                self.output_label.config(text='Vídeo adicionado com sucesso!', foreground='green')
-            elif self.transaction == "UPDATE" and self.id_video:
-                update_videos_transaction(self.id_video, self.name, self.resolution, final_path)  # Chamada SQL
-                self.output_label.config(text='Vídeo atualizado com sucesso!', foreground='green')
-            self.add_or_edit_video_button.destroy()
-            quit_button = Button(self.add_video_window, text='Fechar', command=lambda: self.add_video_window.destroy())
-            quit_button.grid(row=3, column=1, pady=5)
-            self.refresh_list_videos()
 
 
 def main():
