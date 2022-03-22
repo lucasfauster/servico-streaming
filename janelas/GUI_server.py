@@ -1,4 +1,8 @@
 from GUI_video import *
+from PIL import Image, ImageTk
+import cv2
+import imutils
+import os
 
 
 class ServerGUI:
@@ -134,7 +138,8 @@ class ServerGUI:
             print("Nenhum vídeo selecionado")
 
     def add_video(self):
-        show_video_window(self.window, "CREATE")
+        add_video_gui = AddVideoGUI(self.window, "CREATE")
+        add_video_gui.render()
         self.refresh_list_videos()
 
     def update_video(self):
@@ -142,10 +147,11 @@ class ServerGUI:
         if selected:
             id_video, name, resolution, path = self.table_view.item(selected, 'value')
             os.remove(f'../videos/{resolution}/{name}')
-            show_video_window(self.window, "UPDATE", id_video, name, resolution, path)
+            add_video_gui = AddVideoGUI(self.window, "UPDATE", id_video, name, resolution, path)
+            add_video_gui.render()
+            self.refresh_list_videos()
         else:
             print("Nenhum vídeo selecionado")
-
 
 
 def main():
