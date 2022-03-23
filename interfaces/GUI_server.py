@@ -23,6 +23,7 @@ class ServerGUI:
         self.logo = Frame(self.window)
         self.img = ImageTk.PhotoImage(Image.open(self.LOGO).resize((214, 120)))
         self.logo_panel = Label(self.logo, image=self.img)
+        self.output_label = Label(self.window, text="")
 
         self.style = ttk.Style()
         self.table_frame = Frame(self.window)
@@ -46,7 +47,7 @@ class ServerGUI:
         self.name_label = self.name_input = None
         self.resolution_label = self.option = self.resolution_input = None
         self.file_label = self.path_input = None
-        self.choose_file_button = self.output_label = None
+        self.choose_file_button = self.add_video_output_label = None
         self.add_or_edit_video_button = None
         self.progress_bar = self.bar_style = None
 
@@ -55,16 +56,19 @@ class ServerGUI:
         self.window.configure(background='white')
         self.window.geometry(str(self.WIDTH) + "x" + str(self.HEIGHT))
 
-        self.logo.pack(padx=(0, 70), pady=5)
+        self.logo.pack(padx=(0, 40), pady=(0, 10))
         self.logo_panel.pack()
         self.logo_panel.configure(background='white')
+
+        self.output_label.pack(padx=(0, 40))
+        self.output_label.configure(background='white')
 
         self.style.theme_use("default")
         self.style.configure("Treeview", background="#D3D3D3", foreground="black",
                              rowheight=25, fieldbackground="#D3D3D3")
         self.style.map('Treeview', background=[('selected', '#785923')])
 
-        self.table_frame.pack(side="top", padx=50, pady=20)
+        self.table_frame.pack(side="top", padx=50, pady=10)
         self.table_frame.configure(background='white')
         self.table_scroll.pack(side=RIGHT, fill=Y)
         self.table_view.pack()
@@ -114,12 +118,13 @@ class ServerGUI:
         self.list_videos()
 
     def play_video(self):
+        self.output_label.config(text='')
         selected = self.table_view.focus()
         if selected:
             id_video, name, resolution, path = self.table_view.item(selected, 'value')
             self.video_stream(name, resolution, path)
         else:
-            print("Nenhum vídeo selecionado")
+            self.output_label.config(text='Nenhum vídeo selecionado!', foreground='red')
 
     @staticmethod
     def video_stream(name, resolution, path):
@@ -133,17 +138,16 @@ class ServerGUI:
                 cv2.setWindowTitle('Frame', f'{name} ({resolution})')
                 key = cv2.waitKey(1) & 0xFF
                 if key == ord('q'):
-                    print("VÍDEO FECHADO")
                     video_cap.release()
                     cv2.destroyWindow('Frame')
                     break
             else:
-                print("VIDEO TERMINOU!")
                 video_cap.release()
                 cv2.destroyWindow('Frame')
                 break
 
     def delete_video(self):
+        self.output_label.config(text='')
         selected = self.table_view.focus()
         if selected:
             id_video, name, resolution, path = self.table_view.item(selected, 'value')
@@ -151,19 +155,20 @@ class ServerGUI:
             delete_video_transaction(id_video)
             self.refresh_list_videos()
         else:
-            print("Nenhum vídeo selecionado")
+            self.output_label.config(text='Nenhum vídeo selecionado!', foreground='red')
 
     def add_video(self):
+        self.output_label.config(text='')
         self.initialize_add_video_window("CREATE")
 
     def update_video(self):
+        self.output_label.config(text='')
         selected = self.table_view.focus()
         if selected:
             id_video, name, resolution, path = self.table_view.item(selected, 'value')
             self.initialize_add_video_window("UPDATE", id_video, name, resolution, path)
-            # To do if path different, delete old file
         else:
-            print("Nenhum vídeo selecionado")
+            self.output_label.config(text='Nenhum vídeo selecionado!', foreground='red')
 
     def initialize_add_video_window(self, transaction, id_video="", name="", resolution="", path=""):
         self.transaction = transaction
@@ -187,7 +192,7 @@ class ServerGUI:
 
         self.choose_file_button = Button(self.add_video_window, text='Escolher Arquivo',
                                          command=lambda: self.choose_file())
-        self.output_label = Label(self.add_video_window, text="")
+        self.add_video_output_label = Label(self.add_video_window, text="")
 
         self.add_or_edit_video_button = None
 
@@ -225,8 +230,8 @@ class ServerGUI:
         self.path_input.configure(state=DISABLED)
 
         self.choose_file_button.grid(row=1, column=2)
-        self.output_label.grid(row=4, columnspan=3, pady=10)
-        self.output_label.configure(background='#b3b3b3')
+        self.add_video_output_label.grid(row=4, columnspan=3, pady=10)
+        self.add_video_output_label.configure(background='#b3b3b3')
 
         if self.transaction == "CREATE":
             button_text = 'Adicionar Vídeo'
@@ -252,13 +257,13 @@ class ServerGUI:
         if self.name and self.resolution and self.path and self.path != ' Nenhum arquivo selecionado':
             return True
         elif not self.name:
-            self.output_label.config(text='Nome não pode ficar em branco!', foreground='red')
+            self.add_video_output_label.config(text='Nome não pode ficar em branco!', foreground='red')
         elif self.path == ' Nenhum arquivo selecionado' or not self.path:
-            self.output_label.config(text='Arquivo não pode ficar em branco!', foreground='red')
+            self.add_video_output_label.config(text='Arquivo não pode ficar em branco!', foreground='red')
         elif not self.resolution:
-            self.output_label.config(text='Resolução não pode ficar em branco!', foreground='red')
+            self.add_video_output_label.config(text='Resolução não pode ficar em branco!', foreground='red')
         else:
-            self.output_label.config(text='Erro ao adicionar vídeo!', foreground='red')
+            self.add_video_output_label.config(text='Erro ao adicionar vídeo!', foreground='red')
         return False
 
     def save_video(self):
@@ -279,13 +284,13 @@ class ServerGUI:
                 time.sleep(0.2)
             self.progress_bar.destroy()
             if self.transaction == "CREATE":
-                create_video_transaction(self.name, self.resolution, final_path)  # Chamada SQL
-                self.output_label.config(text='Vídeo adicionado com sucesso!', foreground='green')
+                create_video_transaction(self.name, self.resolution, final_path)
+                self.add_video_output_label.config(text='Vídeo adicionado com sucesso!', foreground='green')
             elif self.transaction == "UPDATE" and self.id_video:
                 if (self.name != old_name) or (self.resolution != old_resolution):
                     os.remove(old_path)
-                update_videos_transaction(self.id_video, self.name, self.resolution, final_path)  # Chamada SQL
-                self.output_label.config(text='Vídeo atualizado com sucesso!', foreground='green')
+                update_videos_transaction(self.id_video, self.name, self.resolution, final_path)
+                self.add_video_output_label.config(text='Vídeo atualizado com sucesso!', foreground='green')
             self.add_or_edit_video_button.destroy()
             quit_button = Button(self.add_video_window, text='Fechar', command=lambda: self.add_video_window.destroy())
             quit_button.grid(row=3, column=1, pady=5)
