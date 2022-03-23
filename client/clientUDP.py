@@ -3,10 +3,13 @@ import cv2
 import socket
 import numpy as np
 import base64
+import logging
 
 
 class ClientUDP:
     def __init__(self):
+        logging.basicConfig(level=logging.INFO)
+        self.log = logging.getLogger(" clientUDP")
         self.BUFF_SIZE = 65536
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.BUFF_SIZE)
@@ -36,10 +39,10 @@ class ClientUDP:
             if message[0] == "REPRODUZINDO":
                 return True
             else:
-                print(f"ERRO: {message}")
+                self.log.error(f' method = has_video, error = An error occurred: {message}')
                 return False
         except socket.timeout:
-            print("NÃO HÁ VIDEO A SER EXIBIDO")
+            self.log.info(f' method = has_video, message = There is no video to be played')
             return False
 
     def select_video_and_resolution(self, video_name, resolution, user_name, option):
@@ -60,7 +63,7 @@ class ClientUDP:
         if resp[0] == "AUTORIZADO":
             return True
         else:
-            print(resp[0])
+            self.log.error(f' method = check_permission, error = Permission error: {resp[0]}')
             return False
 
     def run_video(self):
@@ -68,17 +71,16 @@ class ClientUDP:
         try:
             while True:
                 packet, _ = self.client_socket.recvfrom(self.BUFF_SIZE)
-                # print("Received {0} bytes of data.".format(sys.getsizeof(packet)))
                 data = base64.b64decode(packet)
                 npdata = np.fromstring(data, dtype=np.uint8)
                 frame = cv2.imdecode(npdata, 1)
                 cv2.imshow("", frame)
                 key = cv2.waitKey(50) & 0xFF
                 if key == ord('q'):
-                    print("VÍDEO FECHADO")
+                    self.log.info(f' method = run_video, message = Video closed')
                     break
         except socket.timeout:
-            print("VIDEO TERMINOU!")
+            self.log.info(f' method = run_video, message = Video finished')
         finally:
             cv2.destroyAllWindows()
             message = ['CLOSE_STREAMING']

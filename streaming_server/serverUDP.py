@@ -1,13 +1,17 @@
+from db.video_transactions import *
 import pickle
 import threading
 import cv2
 import imutils
 import socket
 import base64
-from db.video_transactions import *
+import logging
 
-class serverUDP:
+
+class ServerUDP:
     def __init__(self):
+        logging.basicConfig(level=logging.INFO)
+        self.log = logging.getLogger(" ServerUDP")
         self.BUFF_SIZE = 65536
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, self.BUFF_SIZE)
@@ -25,20 +29,21 @@ class serverUDP:
         self.active_clients = []
 
         self.lista_videos = read_videos_transaction_to_client()
+        self.log.info(' method = init, message = UDP server ready!')
 
     def get_user_type(self, user_name):
         self.service_socket.send(pickle.dumps(["GET_USER_INFORMATION", user_name, "SINGLE"]))
         resp = pickle.loads(self.service_socket.recv(1024))
         if resp[0] == "STATUS_DO_USUARIO":
             return resp[1]
-        print("ERRO AO BUSCAR INFORMAÇÕESDO USUÁRIO")
+        self.log.error(' method = get_user_type, error = An error occurred while getting user type')
 
     def get_user_group(self, user_name):
         self.service_socket.send(pickle.dumps(["GET_USER_INFORMATION", user_name, "GROUP"]))
         resp = pickle.loads(self.service_socket.recv(1024))
         if resp[0] == "ENDERECO_DOS_USUARIOS":
             return resp[1]
-        print("ERRO AO BUSCAR INFORMAÇÕES DO GRUPO  DO USUÁRIO")
+        self.log.error(' method = get_user_group, error = An error occurred while getting user group')
 
     @staticmethod
     def find_video(video_name, resolution):
@@ -56,7 +61,7 @@ class serverUDP:
     def send_video(self, client_addr, video, resolution):
         vid = self.find_video(video, resolution)
         if vid.isOpened():
-            print(f"ENVIANDO VÍDEO {video} COM RESOLUÇÃO {resolution} PARA {client_addr}")
+            self.log.info(f' method = send_video, message = Sending video "{video}" with resolution {resolution} to {client_addr}')
             message = pickle.dumps(["REPRODUZINDO"])
             for addr in client_addr:
                 self.server_socket.sendto(message, addr)
@@ -64,7 +69,8 @@ class serverUDP:
                 client_addr = self.is_client_active(client_addr)
                 img, frame = vid.read()
                 if not img or len(client_addr) == 0:
-                    print(f'ENVIO DO VÍDEO {video} COM RESOLUÇÃO {resolution} PARA {client_addr} TERMINADO!')
+                    self.log.info(f' method = send_video, message = Video "{video}" with resolution {resolution} '
+                                  f'finished being sent to {client_addr}')
                     break
                 frame = imutils.resize(frame, width=600)
                 encoded, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 60])
@@ -74,7 +80,7 @@ class serverUDP:
             vid.release()
         else:
             msg = f"VIDEO {video} NÃO ENCONTRADO PARA RESOLUÇÃO {resolution}."
-            print(msg)
+            self.log.error(f' method = send_video, error = Video "{video} not found for resolution {resolution}.')
             for addr in client_addr:
                 self.server_socket.sendto(pickle.dumps(msg), addr)
 
@@ -104,7 +110,7 @@ class serverUDP:
             elif type(msg) is list and msg[0] == 'LISTAR_VIDEOS':
                 msg = pickle.dumps(self.lista_videos)
                 self.server_socket.sendto(msg, address)
-                print("LISTA DE VIDEOS ENVIADA PARA", address)
+                self.log.info(f' method = main, message = List of Videos sent to {address}')
 
             elif type(msg) is list and msg[0] == "GET_USER_INFORMATION":
                 user_name = msg[1]
@@ -122,4 +128,4 @@ class serverUDP:
 
 
 if __name__ == "__main__":
-    serverUDP().main()
+    ServerUDP().main()
