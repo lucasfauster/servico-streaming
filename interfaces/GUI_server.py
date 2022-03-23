@@ -262,8 +262,11 @@ class ServerGUI:
         return False
 
     def save_video(self):
+        old_name = self.name
         self.name = self.name_input.get()
+        old_resolution = self.resolution
         self.resolution = self.option.get()
+        old_path = self.path
         self.path = self.path_input.get()
         final_path = f'../videos/{self.resolution}/{self.name}'
         copyfile(self.path, final_path)
@@ -279,6 +282,8 @@ class ServerGUI:
                 create_video_transaction(self.name, self.resolution, final_path)  # Chamada SQL
                 self.output_label.config(text='Vídeo adicionado com sucesso!', foreground='green')
             elif self.transaction == "UPDATE" and self.id_video:
+                if (self.name != old_name) or (self.resolution != old_resolution):
+                    os.remove(old_path)
                 update_videos_transaction(self.id_video, self.name, self.resolution, final_path)  # Chamada SQL
                 self.output_label.config(text='Vídeo atualizado com sucesso!', foreground='green')
             self.add_or_edit_video_button.destroy()
